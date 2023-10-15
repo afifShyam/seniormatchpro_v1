@@ -1,4 +1,4 @@
-package com.example.seniormatchpro_v1
+package com.example.firebase_signin
 
 import io.flutter.embedding.android.FlutterActivity
 
