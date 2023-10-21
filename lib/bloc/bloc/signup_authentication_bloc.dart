@@ -11,8 +11,10 @@ class SignupAuthenticationBloc
   SignupAuthenticationBloc() : super(SignupAuthenticationState.initial()) {
     on<SignUpRealtimeDatabaseUser>(_userSignUpUser);
     on<SignUpAuthenticationUser>(_userSignUpAuth);
+    on<SignInUser>(_signInUser);
   }
 
+  //count currentUser
   Future<int> getNextId() async {
     // Get the current maximum ID from the database.
     final databaseReference =
@@ -34,6 +36,7 @@ class SignupAuthenticationBloc
     return maxId;
   }
 
+  //sign up user in realtime database
   Future<void> _userSignUpUser(SignUpRealtimeDatabaseUser event,
       Emitter<SignupAuthenticationState> emit) async {
     try {
@@ -88,6 +91,24 @@ class SignupAuthenticationBloc
           userCredential: userCredential,
         ),
       );
+    } catch (e) {
+      emit(state.copyWith(error: 'Error $e'));
+    }
+  }
+
+  /// Handles the `SignInUser` event.
+  Future<void> _signInUser(
+      SignInUser event, Emitter<SignupAuthenticationState> emit) async {
+    try {
+      emit(state.copyWith(signupStatus: SignupStatus.loading));
+
+      final userLogin = await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: event.email, password: event.password);
+
+      emit(state.copyWith(
+        userLogin: userLogin,
+        signupStatus: SignupStatus.completed,
+      ));
     } catch (e) {
       emit(state.copyWith(error: 'Error $e'));
     }

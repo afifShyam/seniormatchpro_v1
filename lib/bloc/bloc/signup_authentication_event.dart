@@ -23,3 +23,10 @@ class SignUpAuthenticationUser extends SignupAuthenticationEvent {
   final String email;
   final String password;
 }
+
+class SignInUser extends SignupAuthenticationEvent {
+  SignInUser({required this.email, required this.password});
+
+  final String email;
+  final String password;
+}
