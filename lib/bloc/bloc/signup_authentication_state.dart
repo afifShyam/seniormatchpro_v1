@@ -12,11 +12,13 @@ class SignupAuthenticationState extends Equatable {
   final SignupStatus signupStatus;
   final String error;
   final DatabaseReference databaseReference;
+  final UserCredential? userCredential;
 
   const SignupAuthenticationState({
     required this.signupStatus,
     required this.error,
     required this.databaseReference,
+    this.userCredential,
   });
 
   factory SignupAuthenticationState.initial() {
@@ -24,6 +26,7 @@ class SignupAuthenticationState extends Equatable {
       signupStatus: SignupStatus.initial,
       error: '',
       databaseReference: FirebaseDatabase.instance.ref().child('user/'),
+      userCredential: null,
     );
   }
 
@@ -31,11 +34,13 @@ class SignupAuthenticationState extends Equatable {
     SignupStatus? signupStatus,
     String? error,
     DatabaseReference? databaseReference,
+    UserCredential? userCredential,
   }) {
     return SignupAuthenticationState(
       signupStatus: signupStatus ?? this.signupStatus,
       error: error ?? this.error,
       databaseReference: databaseReference ?? this.databaseReference,
+      userCredential: userCredential ?? this.userCredential,
     );
   }
 
