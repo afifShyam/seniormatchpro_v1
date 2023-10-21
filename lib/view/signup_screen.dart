@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:seniormatchpro_v1/index.dart';
@@ -90,12 +89,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   () {
                     context
                         .read<SignupAuthenticationBloc>()
-                        .add(SignupAuthenticationEvent(
+                        .add(SignUpRealtimeDatabaseUser(
                           username: _userNameTextController.text,
                           email: _emailTextController.text,
                           password: _passwordTextController.text,
-                          id: id,
                         ));
+
+                    context.read<SignupAuthenticationBloc>().add(
+                        SignUpAuthenticationUser(
+                            email: _emailTextController.text,
+                            password: _passwordTextController.text));
+
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -110,23 +114,4 @@ class _SignUpScreenState extends State<SignUpScreen> {
       ),
     );
   }
-
-  // Future<void> signUp() async {
-  //   try {
-  //     final userCredential = await FirebaseAuth.instance
-  //         .createUserWithEmailAndPassword(
-  //             email: _emailTextController.text,
-  //             password: _passwordTextController.text);
-
-  //     if (userCredential.user != null) {
-  //       print("Created New Account");
-  //       Navigator.push(
-  //         context,
-  //         MaterialPageRoute(builder: (context) => HomeScreen()),
-  //       );
-  //     }
-  //   } catch (error) {
-  //     print("Error: $error");
-  //   }
-  // }
 }

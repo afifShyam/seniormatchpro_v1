@@ -1,4 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:seniormatchpro_v1/index.dart';
 import 'package:flutter/material.dart';
 
@@ -10,8 +10,8 @@ class SignInScreen extends StatefulWidget {
 }
 
 class _SignInScreenState extends State<SignInScreen> {
-  TextEditingController _passwordTextController = TextEditingController();
-  TextEditingController _emailTextController = TextEditingController();
+  final TextEditingController _passwordTextController = TextEditingController();
+  final TextEditingController _emailTextController = TextEditingController();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -45,18 +45,35 @@ class _SignInScreenState extends State<SignInScreen> {
                   height: 5,
                 ),
                 forgetPassword(context),
-                firebaseUIButton(context, "Sign In", () {
-                  FirebaseAuth.instance
-                      .signInWithEmailAndPassword(
-                          email: _emailTextController.text,
-                          password: _passwordTextController.text)
-                      .then((value) {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) => HomeScreen()));
-                  }).onError((error, stackTrace) {
-                    print("Error ${error.toString()}");
-                  });
-                }),
+                BlocProvider(
+                  create: (context) => SignupAuthenticationBloc(),
+                  child: BlocBuilder<SignupAuthenticationBloc,
+                      SignupAuthenticationState>(
+                    builder: (context, state) {
+                      return firebaseUIButton(context, "Sign In", () {
+                        context.read<SignupAuthenticationBloc>().add(SignInUser(
+                            email: _emailTextController.text,
+                            password: _passwordTextController.text));
+                        if (state.signupStatus == SignupStatus.completed) {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const HomeScreen()));
+                        }
+                        if (state.signupStatus == SignupStatus.error) {
+                          SnackBar(
+                            content: Text(
+                              state.error,
+                              style: const TextStyle(
+                                  color: Colors
+                                      .red), // You can style it as you prefer
+                            ),
+                          );
+                        }
+                      });
+                    },
+                  ),
+                ),
                 signUpOption()
               ],
             ),
@@ -75,7 +92,7 @@ class _SignInScreenState extends State<SignInScreen> {
         GestureDetector(
           onTap: () {
             Navigator.push(context,
-                MaterialPageRoute(builder: (context) => SignUpScreen()));
+                MaterialPageRoute(builder: (context) => const SignUpScreen()));
           },
           child: const Text(
             " Sign Up",
@@ -97,8 +114,8 @@ class _SignInScreenState extends State<SignInScreen> {
           style: TextStyle(color: Colors.white70),
           textAlign: TextAlign.right,
         ),
-        onPressed: () => Navigator.push(
-            context, MaterialPageRoute(builder: (context) => ResetPassword())),
+        onPressed: () => Navigator.push(context,
+            MaterialPageRoute(builder: (context) => const ResetPassword())),
       ),
     );
   }
