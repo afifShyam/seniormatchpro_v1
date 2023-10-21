@@ -93,7 +93,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           username: _userNameTextController.text,
                           email: _emailTextController.text,
                           password: _passwordTextController.text,
-                          id: id,
                         ));
 
                     context.read<SignupAuthenticationBloc>().add(

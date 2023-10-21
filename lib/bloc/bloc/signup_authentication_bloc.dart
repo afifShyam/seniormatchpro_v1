@@ -13,6 +13,27 @@ class SignupAuthenticationBloc
     on<SignUpAuthenticationUser>(_userSignUpAuth);
   }
 
+  Future<int> getNextId() async {
+    // Get the current maximum ID from the database.
+    final databaseReference =
+        FirebaseDatabase.instance.ref().child('user/currentUser');
+    final snapshot = await databaseReference.get();
+
+    // If the maxId does not exist, initialize it to 0.
+    int maxId = 0;
+    if (snapshot.exists) {
+      maxId = snapshot.value as int;
+    }
+
+    // Increment the maxId by 1.
+    maxId++;
+
+    // Set the new maxId in the database.
+    await databaseReference.set(maxId);
+
+    return maxId;
+  }
+
   Future<void> _userSignUpUser(SignUpRealtimeDatabaseUser event,
       Emitter<SignupAuthenticationState> emit) async {
     try {
@@ -20,8 +41,11 @@ class SignupAuthenticationBloc
 
       emit(state.copyWith(signupStatus: SignupStatus.loading));
 
+      // Get the next ID for the new user.
+      final id = await getNextId();
+
       final userData = {
-        'id': event.id,
+        'id': id,
         'username': event.username,
         'email': event.email,
         'password': event.password,

@@ -6,13 +6,11 @@ class SignUpRealtimeDatabaseUser extends SignupAuthenticationEvent {
   final String username;
   final String email;
   final String password;
-  final int id;
 
   SignUpRealtimeDatabaseUser({
     required this.username,
     required this.email,
     required this.password,
-    required this.id,
   });
 }
 
