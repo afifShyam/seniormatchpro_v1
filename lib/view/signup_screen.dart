@@ -1,7 +1,10 @@
+import 'dart:developer';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:seniormatchpro_v1/index.dart';
-import 'package:seniormatchpro_v1/view/cg_dashboard.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({Key? key}) : super(key: key);
@@ -15,6 +18,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _passwordTextController = TextEditingController();
   final TextEditingController _emailTextController = TextEditingController();
   final TextEditingController _userNameTextController = TextEditingController();
+  String dropdownValue = 'Worker';
+  File? imageFile;
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   void dispose() {
@@ -84,27 +94,92 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   _passwordTextController,
                 ),
                 const SizedBox(height: 20),
-                firebaseUIButton(
-                  context,
-                  "Sign Up",
-                  () {
-                    context
-                        .read<SignupAuthenticationBloc>()
-                        .add(SignUpRealtimeDatabaseUser(
-                          username: _userNameTextController.text,
-                          email: _emailTextController.text,
-                          password: _passwordTextController.text,
-                        ));
-
-                    context.read<SignupAuthenticationBloc>().add(
-                        SignUpAuthenticationUser(
-                            email: _emailTextController.text,
-                            password: _passwordTextController.text));
-
-                    Navigator.push(
+                DropdownButtonFormField<String>(
+                  value: dropdownValue,
+                  items: <String>[
+                    'Worker',
+                    'Hirer',
+                  ].map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(
+                        value,
+                        style: const TextStyle(
+                            fontSize: 20), // Adjust the font size
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      dropdownValue = newValue!;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors
+                        .transparent, // Set the background color to transparent
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                // ElevatedButton(
+                //   onPressed: () async {
+                //     final pickedFile = await ImagePicker()
+                //         .pickImage(source: ImageSource.gallery);
+                //     if (pickedFile != null) {
+                //       setState(() {
+                //         imageFile = File(pickedFile.path);
+                //         log(imageFile.toString());
+                //       });
+                //     }
+                //   },
+                //   child: Text("Pick Image"),
+                // ),
+                // const SizedBox(height: 20),
+                BlocBuilder<SignupAuthenticationBloc,
+                    SignupAuthenticationState>(
+                  builder: (context, state) {
+                    return firebaseUIButton(
                       context,
-                      MaterialPageRoute(
-                          builder: (context) => const CgDashboard()),
+                      "Sign Up",
+                      () {
+                        context
+                            .read<SignupAuthenticationBloc>()
+                            .add(SignUpRealtimeDatabaseUser(
+                              username: _userNameTextController.text,
+                              email: _emailTextController.text,
+                              password: _passwordTextController.text,
+                              role: dropdownValue,
+                              // image: imageFile!,
+                            ));
+
+                        context.read<SignupAuthenticationBloc>().add(
+                            SignUpAuthenticationUser(
+                                email: _emailTextController.text,
+                                password: _passwordTextController.text));
+
+                        if (state.signupStatus == SignupStatus.error) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                state.error,
+                              ),
+                            ),
+                          );
+                          log(state.error);
+                        }
+                        if (state.signupStatus == SignupStatus.completed) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const CgDashboard()),
+                          );
+                        }
+                      },
                     );
                   },
                 ),

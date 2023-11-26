@@ -37,8 +37,10 @@ class SignupAuthenticationBloc
   }
 
   //sign up user in realtime database
-  Future<void> _userSignUpUser(SignUpRealtimeDatabaseUser event,
-      Emitter<SignupAuthenticationState> emit) async {
+  Future<void> _userSignUpUser(
+    SignUpRealtimeDatabaseUser event,
+    Emitter<SignupAuthenticationState> emit,
+  ) async {
     try {
       final databaseReference = FirebaseDatabase.instance.ref().child('user/');
 
@@ -46,15 +48,17 @@ class SignupAuthenticationBloc
 
       // Get the next ID for the new user.
       final id = await getNextId();
+      print('ID: $id');
 
       final userData = {
         'id': id,
         'username': event.username,
         'email': event.email,
         'password': event.password,
+        'role': event.role,
       };
 
-      //generate unique key
+      // generate unique key
       final userRef = databaseReference.push();
 
       // Set user data at the generated reference
@@ -65,6 +69,7 @@ class SignupAuthenticationBloc
         databaseReference: userRef,
       ));
     } catch (e) {
+      print('Error during signup: $e');
       emit(state.copyWith(
         signupStatus: SignupStatus.error,
         error: 'Error: $e',

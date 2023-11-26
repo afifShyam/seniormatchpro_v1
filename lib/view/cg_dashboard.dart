@@ -1,4 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:seniormatchpro_v1/index.dart';
 
 class CgDashboard extends StatefulWidget {
   const CgDashboard({Key? key}) : super(key: key);
@@ -8,8 +10,6 @@ class CgDashboard extends StatefulWidget {
 }
 
 class _CgDashboardState extends State<CgDashboard> {
-  int _currentIndex = 0;
-
   List<Widget> body = const [
     // Replace the following Icons with your actual widgets
     Icon(Icons.home),
@@ -20,31 +20,90 @@ class _CgDashboardState extends State<CgDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: body[_currentIndex],
+      appBar: AppBar(
+          automaticallyImplyLeading: false,
+          title: const Text('Job Offer',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              )),
+          centerTitle: true,
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          foregroundColor: Colors.black,
+          actions: [
+            IconButton(
+              onPressed: () {
+                FirebaseAuth.instance.signOut();
+                Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SignInScreen(),
+                    ));
+              },
+              icon: const Icon(Icons.logout),
+            )
+          ]),
+      body: Padding(
+        padding: const EdgeInsets.only(
+          left: 15,
+          right: 15,
+        ),
+        child: ListView.builder(
+            itemCount: 100,
+            itemBuilder: (context, index) {
+              return Card(
+                elevation: 5,
+                shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(
+                  Radius.circular(10),
+                )),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.person,
+                      ),
+                      const SizedBox(
+                        width: 10,
+                      ),
+                      const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Name',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'Available',
+                          )
+                        ],
+                      ),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => HirePage(),
+                              ));
+                        },
+                        child: const Icon(
+                          Icons.quick_contacts_mail_outlined,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (int newIndex) {
-          setState(() {
-            _currentIndex = newIndex;
-          });
-        },
-        items: const [
-          BottomNavigationBarItem(
-            label: 'Home',
-            icon: Icon(Icons.home),
-          ),
-          BottomNavigationBarItem(
-            label: 'Menu',
-            icon: Icon(Icons.menu),
-          ),
-          BottomNavigationBarItem(
-            label: 'Profile',
-            icon: Icon(Icons.person),
-          ),
-        ],
-      ),
+      bottomNavigationBar: const BottomNavbar(),
     );
   }
 }

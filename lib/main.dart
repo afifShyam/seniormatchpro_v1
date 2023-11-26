@@ -12,7 +12,7 @@ void main() async {
         options: DefaultFirebaseOptions.currentPlatform);
   } on FirebaseException catch (e) {
     // Handle Firebase initialization exceptions here.
-    print("Firebase Initialization Error: ${e.toString()}");
+    debugPrint("Firebase Initialization Error: ${e.toString()}");
   }
 
   runApp(BlocProvider(
@@ -22,7 +22,7 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key});
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

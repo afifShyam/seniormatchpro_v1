@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:seniormatchpro_v1/index.dart';
-import 'package:seniormatchpro_v1/view/cg_dashboard.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({Key? key}) : super(key: key);
@@ -61,6 +60,7 @@ class _SignInScreenState extends State<SignInScreen> {
                               MaterialPageRoute(
                                   builder: (context) => const CgDashboard()));
                         }
+
                         if (state.signupStatus == SignupStatus.error) {
                           SnackBar(
                             content: Text(
