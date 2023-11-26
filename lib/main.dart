@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:seniormatchpro_v1/firebase_options.dart';
 import 'package:seniormatchpro_v1/index.dart';
@@ -12,7 +12,7 @@ void main() async {
         options: DefaultFirebaseOptions.currentPlatform);
   } on FirebaseException catch (e) {
     // Handle Firebase initialization exceptions here.
-    print("Firebase Initialization Error: ${e.toString()}");
+    debugPrint("Firebase Initialization Error: ${e.toString()}");
   }
 
   runApp(BlocProvider(
@@ -22,7 +22,7 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key});
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

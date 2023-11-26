@@ -1,4 +1,4 @@
 {
     "java.configuration.updateBuildConfiguration": "automatic",
-    "cmake.configureOnOpen": true
+    "cmake.configureOnOpen": false
 }
