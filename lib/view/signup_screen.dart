@@ -17,7 +17,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _passwordTextController = TextEditingController();
   final TextEditingController _emailTextController = TextEditingController();
   final TextEditingController _userNameTextController = TextEditingController();
-  String dropdownValue = 'Worker';
+  String dropdownValue = 'Elders';
   File? imageFile;
 
   @override
@@ -94,14 +94,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 20),
                 DropdownButtonFormField<String>(
+                  alignment: AlignmentDirectional.center,
                   value: dropdownValue,
                   items: <String>[
-                    'Worker',
-                    'Hirer',
+                    'Elders',
+                    'Caregiver',
                   ].map((String value) {
                     return DropdownMenuItem<String>(
                       value: value,
                       child: Text(
+                        textAlign: TextAlign.center,
                         value,
                         style: const TextStyle(
                             fontSize: 20), // Adjust the font size
@@ -115,12 +117,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   },
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: Colors
-                        .transparent, // Set the background color to transparent
+                    fillColor: Colors.white.withOpacity(
+                        0.3), // Set the background color to transparent
                     contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
+                        horizontal: 16, vertical: 16),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(30),
                     ),
                   ),
                 ),
