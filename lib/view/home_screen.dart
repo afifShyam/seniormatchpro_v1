@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
-import 'package:seniormatchpro_v1/index.dart';
 import 'package:flutter/material.dart';
+import 'package:seniormatchpro_v1/index.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);

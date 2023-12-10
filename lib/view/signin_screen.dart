@@ -58,9 +58,8 @@ class _SignInScreenState extends State<SignInScreen> {
                           Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => const CgDashboard()));
+                                  builder: (context) => const HirePage()));
                         }
-
                         if (state.signupStatus == SignupStatus.error) {
                           SnackBar(
                             content: Text(
@@ -121,3 +120,5 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 }
+
+
