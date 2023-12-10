@@ -59,7 +59,7 @@ class SignupAuthenticationBloc
       };
 
       // generate unique key
-      final userRef = databaseReference.push();
+      final userRef = databaseReference.child('/$id');
 
       // Set user data at the generated reference
       await userRef.set(userData);
