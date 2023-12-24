@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:seniormatchpro_v1/index.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({Key? key}) : super(key: key);
@@ -106,7 +107,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         textAlign: TextAlign.center,
                         value,
                         style: const TextStyle(
-                            fontSize: 20), // Adjust the font size
+                          fontSize: 19,
+                          color: Colors.black,
+                        ), // Adjust the font size
                       ),
                     );
                   }).toList(),
@@ -127,20 +130,34 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                // ElevatedButton(
-                //   onPressed: () async {
-                //     final pickedFile = await ImagePicker()
-                //         .pickImage(source: ImageSource.gallery);
-                //     if (pickedFile != null) {
-                //       setState(() {
-                //         imageFile = File(pickedFile.path);
-                //         log(imageFile.toString());
-                //       });
-                //     }
-                //   },
-                //   child: Text("Pick Image"),
-                // ),
-                // const SizedBox(height: 20),
+                GestureDetector(
+                  onTap: () => context
+                      .read<SignupAuthenticationBloc>()
+                      .add(UploadImage()),
+                  child: Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: context
+                              .read<SignupAuthenticationBloc>()
+                              .state
+                              .imageUpload
+                              .path
+                              .isNotEmpty
+                          ? null
+                          : Colors.white,
+                      image: DecorationImage(
+                        fit: BoxFit.cover,
+                        image: FileImage(context
+                            .read<SignupAuthenticationBloc>()
+                            .state
+                            .imageUpload), // Add a placeholder image
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
                 BlocBuilder<SignupAuthenticationBloc,
                     SignupAuthenticationState>(
                   builder: (context, state) {
@@ -148,6 +165,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       context,
                       "Sign Up",
                       () {
+                        log('${state.imageUpload}');
                         context
                             .read<SignupAuthenticationBloc>()
                             .add(SignUpRealtimeDatabaseUser(
@@ -155,7 +173,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               email: _emailTextController.text,
                               password: _passwordTextController.text,
                               role: dropdownValue,
-                              // image: imageFile!,
+                              image: state.imageUpload.path,
                             ));
 
                         context.read<SignupAuthenticationBloc>().add(

@@ -1,7 +1,12 @@
+import 'dart:developer';
+import 'dart:io';
+
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
 
 part 'signup_authentication_event.dart';
 part 'signup_authentication_state.dart';
@@ -12,6 +17,7 @@ class SignupAuthenticationBloc
     on<SignUpRealtimeDatabaseUser>(_userSignUpUser);
     on<SignUpAuthenticationUser>(_userSignUpAuth);
     on<SignInUser>(_signInUser);
+    on<UploadImage>(_uploadImage);
   }
 
   //count currentUser
@@ -48,7 +54,7 @@ class SignupAuthenticationBloc
 
       // Get the next ID for the new user.
       final id = await getNextId();
-      print('ID: $id');
+      print('ID: ${state.imageUpload}');
 
       final userData = {
         'id': id,
@@ -56,6 +62,7 @@ class SignupAuthenticationBloc
         'email': event.email,
         'password': event.password,
         'role': event.role,
+        'image': event.image,
       };
 
       // generate unique key
@@ -116,6 +123,27 @@ class SignupAuthenticationBloc
       ));
     } catch (e) {
       emit(state.copyWith(error: 'Error $e'));
+    }
+  }
+
+  Future<void> _uploadImage(
+      UploadImage event, Emitter<SignupAuthenticationState> emit) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      try {
+        UploadTask imageUploded = FirebaseStorage.instance
+            .ref()
+            .child('images')
+            .putFile(File(pickedFile.path));
+        emit(state.copyWith(imageUpload: File(pickedFile.path)));
+        log(state.imageUpload.path);
+
+        await imageUploded.snapshot.ref.getDownloadURL();
+      } catch (e) {
+        log('Error upload: $e');
+      }
     }
   }
 }

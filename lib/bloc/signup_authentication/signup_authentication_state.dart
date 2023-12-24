@@ -14,6 +14,7 @@ class SignupAuthenticationState extends Equatable {
   final DatabaseReference databaseReference;
   final UserCredential? userCredential;
   final UserCredential? userLogin;
+  final File imageUpload;
 
   const SignupAuthenticationState({
     required this.signupStatus,
@@ -21,6 +22,7 @@ class SignupAuthenticationState extends Equatable {
     required this.databaseReference,
     this.userCredential,
     this.userLogin,
+    required this.imageUpload,
   });
 
   factory SignupAuthenticationState.initial() {
@@ -30,6 +32,7 @@ class SignupAuthenticationState extends Equatable {
       databaseReference: FirebaseDatabase.instance.ref().child('user/'),
       userCredential: null,
       userLogin: null,
+      imageUpload: File(''),
     );
   }
 
@@ -39,6 +42,7 @@ class SignupAuthenticationState extends Equatable {
     DatabaseReference? databaseReference,
     UserCredential? userCredential,
     UserCredential? userLogin,
+    File? imageUpload,
   }) {
     return SignupAuthenticationState(
       signupStatus: signupStatus ?? this.signupStatus,
@@ -46,6 +50,7 @@ class SignupAuthenticationState extends Equatable {
       databaseReference: databaseReference ?? this.databaseReference,
       userCredential: userCredential ?? this.userCredential,
       userLogin: userLogin ?? this.userLogin,
+      imageUpload: imageUpload ?? this.imageUpload,
     );
   }
 
@@ -55,6 +60,12 @@ class SignupAuthenticationState extends Equatable {
   }
 
   @override
-  List<dynamic> get props =>
-      [signupStatus, error, databaseReference, userLogin];
+  List<dynamic> get props => [
+        signupStatus,
+        error,
+        databaseReference,
+        userLogin,
+        userCredential,
+        imageUpload
+      ];
 }

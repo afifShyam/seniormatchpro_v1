@@ -7,14 +7,14 @@ class SignUpRealtimeDatabaseUser extends SignupAuthenticationEvent {
   final String email;
   final String password;
   final String role;
-  // final File image;
+  final String image;
 
   SignUpRealtimeDatabaseUser({
     required this.username,
     required this.email,
     required this.password,
     required this.role,
-    // required this.image,
+    required this.image,
   });
 }
 
@@ -34,3 +34,5 @@ class SignInUser extends SignupAuthenticationEvent {
   final String email;
   final String password;
 }
+
+class UploadImage extends SignupAuthenticationEvent {}
