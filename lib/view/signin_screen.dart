@@ -1,6 +1,10 @@
+import 'dart:developer';
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:seniormatchpro_v1/index.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({Key? key}) : super(key: key);
@@ -12,6 +16,7 @@ class SignInScreen extends StatefulWidget {
 class _SignInScreenState extends State<SignInScreen> {
   final TextEditingController _passwordTextController = TextEditingController();
   final TextEditingController _emailTextController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -19,11 +24,16 @@ class _SignInScreenState extends State<SignInScreen> {
         width: MediaQuery.of(context).size.width,
         height: MediaQuery.of(context).size.height,
         decoration: BoxDecoration(
-            gradient: LinearGradient(colors: [
-          hexStringToColor("CB2B93"),
-          hexStringToColor("9546C4"),
-          hexStringToColor("5E61F4")
-        ], begin: Alignment.topCenter, end: Alignment.bottomCenter)),
+          gradient: LinearGradient(
+            colors: [
+              hexStringToColor("CB2B93"),
+              hexStringToColor("9546C4"),
+              hexStringToColor("5E61F4")
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
         child: SingleChildScrollView(
           child: Padding(
             padding: EdgeInsets.fromLTRB(
@@ -34,13 +44,21 @@ class _SignInScreenState extends State<SignInScreen> {
                 const SizedBox(
                   height: 30,
                 ),
-                reusableTextField("Enter UserName", Icons.person_outline, false,
-                    _emailTextController),
+                reusableTextField(
+                  "Enter Email",
+                  Icons.person_outline,
+                  false,
+                  _emailTextController,
+                ),
                 const SizedBox(
                   height: 20,
                 ),
-                reusableTextField("Enter Password", Icons.lock_outline, true,
-                    _passwordTextController),
+                reusableTextField(
+                  "Enter Password",
+                  Icons.lock_outline,
+                  true,
+                  _passwordTextController,
+                ),
                 const SizedBox(
                   height: 5,
                 ),
@@ -51,22 +69,36 @@ class _SignInScreenState extends State<SignInScreen> {
                       SignupAuthenticationState>(
                     builder: (context, state) {
                       return firebaseUIButton(context, "Sign In", () {
-                        context.read<SignupAuthenticationBloc>().add(SignInUser(
-                            email: _emailTextController.text,
-                            password: _passwordTextController.text));
+                        context.read<SignupAuthenticationBloc>().add(
+                              SignInUser(
+                                email: _emailTextController.text,
+                                password: _passwordTextController.text,
+                              ),
+                            );
                         if (state.signupStatus == SignupStatus.completed) {
+                          log('${state.databaseReference.child('Users').child('id')}');
+
+                          if (state.databaseReference.path
+                              .contains('Elders')) {}
+                          Users user =
+                              getUserSomehow(); // Replace with your logic
                           Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => const CgDashboard()));
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const CgDashboard(),
+                              // JobRequestsPage(user: user),
+                            ),
+                          );
                         }
                         if (state.signupStatus == SignupStatus.error) {
-                          SnackBar(
-                            content: Text(
-                              state.error,
-                              style: const TextStyle(
-                                  color: Colors
-                                      .red), // You can style it as you prefer
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                state.error,
+                                style: const TextStyle(
+                                  color: Colors.red,
+                                ),
+                              ),
                             ),
                           );
                         }
@@ -91,8 +123,12 @@ class _SignInScreenState extends State<SignInScreen> {
             style: TextStyle(color: Colors.white70)),
         GestureDetector(
           onTap: () {
-            Navigator.push(context,
-                MaterialPageRoute(builder: (context) => const SignUpScreen()));
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const SignUpScreen(),
+              ),
+            );
           },
           child: const Text(
             " Sign Up",
@@ -114,9 +150,33 @@ class _SignInScreenState extends State<SignInScreen> {
           style: TextStyle(color: Colors.white70),
           textAlign: TextAlign.right,
         ),
-        onPressed: () => Navigator.push(context,
-            MaterialPageRoute(builder: (context) => const ResetPassword())),
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ResetPassword(),
+          ),
+        ),
       ),
     );
+  }
+
+  Users getUserSomehow() {
+    // Replace this with the actual logic to retrieve the authenticated user
+    // Example: If you are using Firebase Authentication
+    User? firebaseUser = FirebaseAuth.instance.currentUser;
+
+    if (firebaseUser != null) {
+      // You may need to map FirebaseUser properties to your User model
+      return Users(
+        id: 0,
+        username: firebaseUser.displayName ?? 'No Username',
+        email: firebaseUser.email ?? 'No Email',
+        role: 'Elders', // You may need additional logic to determine the role
+      );
+    } else {
+      // Handle the case where the user is not authenticated
+      // You may navigate to the sign-in screen or take appropriate action
+      throw Exception('User not authenticated');
+    }
   }
 }

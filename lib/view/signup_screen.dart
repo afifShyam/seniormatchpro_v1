@@ -165,7 +165,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       context,
                       "Sign Up",
                       () {
-                        log('${state.imageUpload}');
+                        log('${state.imageUpload.path.split('/').last}');
                         context
                             .read<SignupAuthenticationBloc>()
                             .add(SignUpRealtimeDatabaseUser(
@@ -173,7 +173,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               email: _emailTextController.text,
                               password: _passwordTextController.text,
                               role: dropdownValue,
-                              image: state.imageUpload.path,
+                              image: state.imageUpload.path.split('/').last,
                             ));
 
                         context.read<SignupAuthenticationBloc>().add(

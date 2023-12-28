@@ -37,6 +37,10 @@ class _CgDashboardState extends State<CgDashboard> {
                 'userId': key,
                 'username': value['username'],
                 'status': value['status'] ?? 'No Status',
+                'email': value['email'] ?? 'No Email',
+                'image': value['image'] ?? 'No Image',
+                'role': value['role'] ?? 'No Role',
+                'id': value['id'] ?? 'No Id',
               });
             } else {
               print('Invalid data structure for key: $key');
@@ -96,25 +100,28 @@ class _CgDashboardState extends State<CgDashboard> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const HirePage(),
+                    builder: (context) => HirePage(
+                      id: userData[index]['id'].toString(),
+                      name: userData[index]['username'].toString(),
+                    ),
                   ),
                 );
               },
               child: Card(
                 elevation: 5,
-                shape: RoundedRectangleBorder(
+                shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.all(
                     Radius.circular(10),
                   ),
                 ),
                 child: Padding(
-                  padding: EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(8.0),
                   child: Row(
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.person,
                       ),
-                      SizedBox(
+                      const SizedBox(
                         width: 10,
                       ),
                       Column(
@@ -122,7 +129,7 @@ class _CgDashboardState extends State<CgDashboard> {
                         children: [
                           Text(
                             userData[index]['username'] ?? 'No Name',
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
@@ -132,8 +139,8 @@ class _CgDashboardState extends State<CgDashboard> {
                           ),
                         ],
                       ),
-                      Spacer(),
-                      Icon(
+                      const Spacer(),
+                      const Icon(
                         Icons.quick_contacts_mail_outlined,
                       ),
                     ],

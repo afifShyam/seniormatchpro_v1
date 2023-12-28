@@ -26,6 +26,9 @@ class SignUpAuthenticationUser extends SignupAuthenticationEvent {
 
   final String email;
   final String password;
+
+  @override
+  String toString() => 'email : $email, password: $password';
 }
 
 class SignInUser extends SignupAuthenticationEvent {

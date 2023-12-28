@@ -4,3 +4,8 @@ export 'signin_screen.dart';
 export 'signup_screen.dart';
 export 'cg_dashboard.dart';
 export 'cg_hire.dart';
+export 'jobRequest.dart';
+export 'cg_payment.dart';
+export 'acceptRequestJob.dart';
+export 'review_page.dart';  
+// export 'cg_profile.dart';

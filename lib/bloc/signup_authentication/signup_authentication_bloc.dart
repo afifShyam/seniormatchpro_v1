@@ -126,18 +126,23 @@ class SignupAuthenticationBloc
     }
   }
 
-  Future<void> _uploadImage(
-      UploadImage event, Emitter<SignupAuthenticationState> emit) async {
+  Future<void> _uploadImage(UploadImage event, Emitter emit) async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
+      File imageUp = File(pickedFile.path);
+      emit(
+        state.copyWith(
+          imageUpload: imageUp,
+        ),
+      );
+
       try {
         UploadTask imageUploded = FirebaseStorage.instance
             .ref()
             .child('images')
             .putFile(File(pickedFile.path));
-        emit(state.copyWith(imageUpload: File(pickedFile.path)));
         log(state.imageUpload.path);
 
         await imageUploded.snapshot.ref.getDownloadURL();
