@@ -36,8 +36,10 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
         values.forEach((key, value) {
           print('Key: $key, Value: $value');
           if (value is Map<dynamic, dynamic> &&
-              value.containsKey('id') &&
-              value['id'].toString() == widget.id) {
+                  value.containsKey('id') &&
+                  value['id'].toString() == widget.id &&
+                  (value['status'] == 'accepted') ||
+              value['status'] == 'pending') {
             requests.add({
               'key': key,
               'jobName': value['jobName'],
@@ -49,6 +51,7 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
               'id': value['id'],
               'remainingTimeSeconds':
                   _calculateRemainingTime(value['createdAt']),
+              'jobId': value['jobId'],
             });
           }
         });

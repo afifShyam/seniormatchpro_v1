@@ -158,8 +158,16 @@ class _HirePageState extends State<HirePage> {
   void _sendJobRequest(String id, String jobName, String location, String email,
       String price, DateTime performDate) {
     String requestId = _databaseReference.push().key ?? '';
+
+    // Generate a unique jobId starting from 101
+    int jobIdCounter = 101;
+    String jobId = 'job_$jobIdCounter';
+
+    // Increment the counter for the next job
+    jobIdCounter++;
     _databaseReference.child(requestId).set({
       'id': id,
+      'jobId': jobId,
       'jobName': jobName,
       'priceOffer': price,
       'location': location,

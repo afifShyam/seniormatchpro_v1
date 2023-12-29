@@ -1,5 +1,8 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/services.dart';
 import 'package:seniormatchpro_v1/view/index.dart';
 
 class AcceptedJobListPage extends StatefulWidget {
@@ -20,6 +23,7 @@ class _AcceptedJobListPageState extends State<AcceptedJobListPage> {
   @override
   void initState() {
     super.initState();
+
     _loadAcceptedJobRequests();
   }
 
@@ -31,15 +35,10 @@ class _AcceptedJobListPageState extends State<AcceptedJobListPage> {
             event.snapshot.value as Map<dynamic, dynamic>;
 
         values.forEach((key, value) {
-          if ((value is Map<dynamic, dynamic>) &&
-                  (value.containsKey('status') &&
-                      value['status'] == 'done_task' &&
-                      value['id'].toString() == widget.id) &&
-                  value['id'].toString() == widget.id
-              //         ||
-              // (value['status'] == 'completed' &&
-              //     value['id'].toString() == widget.id)
-              ) {
+          if (value is Map<dynamic, dynamic> &&
+              value['id'].toString() == widget.id &&
+              (value['status'] == 'done_task' ||
+                  value['status'] == 'completed')) {
             acceptedRequests.add({
               'key': key,
               'jobName': value['jobName'],
@@ -47,6 +46,8 @@ class _AcceptedJobListPageState extends State<AcceptedJobListPage> {
               'email': value['email'],
               'priceOffer': value['priceOffer'],
               'createdAt': value['createdAt'],
+              'jobId': value['jobId'],
+              'status': value['status'],
             });
           }
         });
@@ -62,11 +63,12 @@ class _AcceptedJobListPageState extends State<AcceptedJobListPage> {
     });
   }
 
-  void _makePayment(String key) {
+  void _makePayment(String key, String offerPrice) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         TextEditingController _amountController = TextEditingController();
+
         return AlertDialog(
           title: const Text('Make Payment'),
           content: Column(
@@ -75,15 +77,36 @@ class _AcceptedJobListPageState extends State<AcceptedJobListPage> {
               TextField(
                 controller: _amountController,
                 keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}$')),
+                ],
                 decoration: const InputDecoration(labelText: 'Enter Amount'),
               ),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
-                  // Perform payment logic here
-                  // For example, update the status to 'paid'
-                  _updateStatus(key, 'completed');
-                  Navigator.of(context).pop();
+                  FocusScope.of(context).unfocus();
+                  if (_amountController.text.isNotEmpty &&
+                      double.tryParse(_amountController.text) != null) {
+                    double enteredAmount = double.parse(_amountController.text);
+                    double offerPriceCasting = double.parse(offerPrice);
+
+                    if (enteredAmount >= offerPriceCasting) {
+                      _updateStatus(key, 'completed');
+                      Navigator.of(context).pop();
+                    } else {
+                      // Show a SnackBar with the error message
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Amount must be equal to or greater than the offer price',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
                 },
                 child: const Text('Pay Now'),
               ),
@@ -112,7 +135,7 @@ class _AcceptedJobListPageState extends State<AcceptedJobListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Accepted Job List'),
+        title: const Text('Completed Job List'),
         centerTitle: true,
         backgroundColor: Colors.blueGrey,
         elevation: 0,
@@ -183,20 +206,25 @@ class _AcceptedJobListPageState extends State<AcceptedJobListPage> {
             child: Row(
               children: [
                 ElevatedButton(
-                  onPressed: () {
-                    _makePayment(jobRequest['key']);
-                  },
+                  onPressed: jobRequest['status'] == 'done_task'
+                      ? () {
+                          log('${jobRequest['priceOffer']}');
+                          _makePayment(
+                              jobRequest['key'], jobRequest['priceOffer']);
+                        }
+                      : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                   ),
                   child: const Text('Make Payment'),
                 ),
                 const Spacer(),
-                if (jobRequest['status'] ==
-                    'completed') // Show only for completed jobs
+                if (jobRequest['status'] == 'completed' &&
+                    jobRequest['reviewStatus'] !=
+                        'reviewed') // Add condition here
                   ElevatedButton(
                     onPressed: () =>
-                        _openReviewPage(jobRequest['key'], widget.id),
+                        _openReviewPage(jobRequest['jobId'], widget.id),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
                     ),

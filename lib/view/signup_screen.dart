@@ -46,165 +46,227 @@ class _SignUpScreenState extends State<SignUpScreen> {
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
       ),
-      body: bodyContent(context),
+      body: BlocProvider(
+        create: (context) => SignupAuthenticationBloc(),
+        child:
+            BlocListener<SignupAuthenticationBloc, SignupAuthenticationState>(
+          listener: (context, state) {
+            if (state.signupStatus == SignupStatus.error) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    state.error,
+                  ),
+                ),
+              );
+              log(state.error);
+            } else if (state.signupStatus == SignupStatus.completed) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const CgDashboard()),
+              );
+            }
+          },
+          child: bodyContent(context),
+        ),
+      ),
     );
   }
 
   Widget bodyContent(BuildContext context) {
-    return BlocProvider(
-      create: (context) => SignupAuthenticationBloc(),
-      child: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              hexStringToColor("CB2B93"),
-              hexStringToColor("9546C4"),
-              hexStringToColor("5E61F4"),
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            hexStringToColor("CB2B93"),
+            hexStringToColor("9546C4"),
+            hexStringToColor("5E61F4"),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      ),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 120, 20, 0),
+          child: Column(
+            children: <Widget>[
+              const SizedBox(height: 20),
+              reusableTextField(
+                "Enter UserName",
+                Icons.person_outline,
+                false,
+                _userNameTextController,
+              ),
+              const SizedBox(height: 20),
+              reusableTextField(
+                "Enter Email Id",
+                Icons.person_outline,
+                false,
+                _emailTextController,
+              ),
+              const SizedBox(height: 20),
+              reusableTextField(
+                "Enter Password",
+                Icons.lock_outlined,
+                true,
+                _passwordTextController,
+              ),
+              const SizedBox(height: 20),
+              DropdownButtonFormField<String>(
+                alignment: AlignmentDirectional.center,
+                value: dropdownValue,
+                items: <String>[
+                  'Elders',
+                  'Caregiver',
+                ].map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(
+                      textAlign: TextAlign.center,
+                      value,
+                      style: const TextStyle(
+                        fontSize: 19,
+                        color: Colors.black,
+                      ),
+                    ),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    dropdownValue = newValue!;
+                  });
+                },
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(0.3),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              GestureDetector(
+                onTap: () => _pickImage(context),
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        spreadRadius: 2,
+                        blurRadius: 5,
+                        offset: Offset(0, 3),
+                      ),
+                    ],
+                    image: DecorationImage(
+                      fit: BoxFit.cover,
+                      image: imageFile != null
+                          ? FileImage(imageFile!)
+                          : const AssetImage(
+                                  'assets/images/placeholder_image.png')
+                              as ImageProvider<Object>,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              firebaseUIButton(
+                context,
+                "Sign Up",
+                () {
+                  _signUp(context);
+                },
+              ),
             ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
           ),
         ),
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 120, 20, 0),
-            child: Column(
-              children: <Widget>[
-                const SizedBox(height: 20),
-                reusableTextField(
-                  "Enter UserName",
-                  Icons.person_outline,
-                  false,
-                  _userNameTextController,
-                ),
-                const SizedBox(height: 20),
-                reusableTextField(
-                  "Enter Email Id",
-                  Icons.person_outline,
-                  false,
-                  _emailTextController,
-                ),
-                const SizedBox(height: 20),
-                reusableTextField(
-                  "Enter Password",
-                  Icons.lock_outlined,
-                  true,
-                  _passwordTextController,
-                ),
-                const SizedBox(height: 20),
-                DropdownButtonFormField<String>(
-                  alignment: AlignmentDirectional.center,
-                  value: dropdownValue,
-                  items: <String>[
-                    'Elders',
-                    'Caregiver',
-                  ].map((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(
-                        textAlign: TextAlign.center,
-                        value,
-                        style: const TextStyle(
-                          fontSize: 19,
-                          color: Colors.black,
-                        ), // Adjust the font size
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      dropdownValue = newValue!;
-                    });
-                  },
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white.withOpacity(
-                        0.3), // Set the background color to transparent
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 16),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                GestureDetector(
-                  onTap: () => context
-                      .read<SignupAuthenticationBloc>()
-                      .add(UploadImage()),
-                  child: Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: context
-                              .read<SignupAuthenticationBloc>()
-                              .state
-                              .imageUpload
-                              .path
-                              .isNotEmpty
-                          ? null
-                          : Colors.white,
-                      image: DecorationImage(
-                        fit: BoxFit.cover,
-                        image: FileImage(context
-                            .read<SignupAuthenticationBloc>()
-                            .state
-                            .imageUpload), // Add a placeholder image
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                BlocBuilder<SignupAuthenticationBloc,
-                    SignupAuthenticationState>(
-                  builder: (context, state) {
-                    return firebaseUIButton(
-                      context,
-                      "Sign Up",
-                      () {
-                        log('${state.imageUpload.path.split('/').last}');
-                        context
-                            .read<SignupAuthenticationBloc>()
-                            .add(SignUpRealtimeDatabaseUser(
-                              username: _userNameTextController.text,
-                              email: _emailTextController.text,
-                              password: _passwordTextController.text,
-                              role: dropdownValue,
-                              image: state.imageUpload.path.split('/').last,
-                            ));
+      ),
+    );
+  }
 
-                        context.read<SignupAuthenticationBloc>().add(
-                            SignUpAuthenticationUser(
-                                email: _emailTextController.text,
-                                password: _passwordTextController.text));
+  Future<void> _pickImage(BuildContext context) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
-                        if (state.signupStatus == SignupStatus.error) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                state.error,
-                              ),
-                            ),
-                          );
-                          log(state.error);
-                        }
-                        if (state.signupStatus == SignupStatus.completed) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const CgDashboard()),
-                          );
-                        }
-                      },
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
+    if (pickedFile != null) {
+      setState(() {
+        imageFile = File(pickedFile.path);
+      });
+    }
+  }
+
+  void _signUp(BuildContext context) {
+    final signupBloc = context.read<SignupAuthenticationBloc>();
+
+    if (_validateInputs()) {
+      signupBloc.add(
+        SignUpRealtimeDatabaseUser(
+          username: _userNameTextController.text,
+          email: _emailTextController.text,
+          password: _passwordTextController.text,
+          role: dropdownValue,
+          image: imageFile!.path,
+        ),
+      );
+
+      signupBloc.add(
+        SignUpAuthenticationUser(
+          email: _emailTextController.text,
+          password: _passwordTextController.text,
+        ),
+      );
+    }
+  }
+
+  bool _validateInputs() {
+    // Implement your validation logic here
+    return true;
+  }
+
+  Widget reusableTextField(String hintText, IconData icon, bool obscureText,
+      TextEditingController controller) {
+    return TextField(
+      controller: controller,
+      obscureText: obscureText,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        hintText: hintText,
+        hintStyle: const TextStyle(color: Colors.white),
+        prefixIcon: Icon(icon, color: Colors.white),
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.3),
+        contentPadding:
+            const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(30),
+          borderSide: BorderSide.none,
+        ),
+      ),
+    );
+  }
+
+  Widget firebaseUIButton(
+      BuildContext context, String label, VoidCallback onPressed) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      child: Text(
+        label,
+        style: TextStyle(fontSize: 18),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        padding: EdgeInsets.symmetric(vertical: 15, horizontal: 30),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30),
         ),
       ),
     );

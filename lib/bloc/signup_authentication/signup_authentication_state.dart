@@ -15,15 +15,16 @@ class SignupAuthenticationState extends Equatable {
   final UserCredential? userCredential;
   final UserCredential? userLogin;
   final File imageUpload;
+  final String imageUrl;
 
-  const SignupAuthenticationState({
-    required this.signupStatus,
-    required this.error,
-    required this.databaseReference,
-    this.userCredential,
-    this.userLogin,
-    required this.imageUpload,
-  });
+  const SignupAuthenticationState(
+      {required this.signupStatus,
+      required this.error,
+      required this.databaseReference,
+      this.userCredential,
+      this.userLogin,
+      required this.imageUpload,
+      required this.imageUrl});
 
   factory SignupAuthenticationState.initial() {
     return SignupAuthenticationState(
@@ -33,6 +34,7 @@ class SignupAuthenticationState extends Equatable {
       userCredential: null,
       userLogin: null,
       imageUpload: File(''),
+      imageUrl: '',
     );
   }
 
@@ -43,6 +45,7 @@ class SignupAuthenticationState extends Equatable {
     UserCredential? userCredential,
     UserCredential? userLogin,
     File? imageUpload,
+    String? imageUrl,
   }) {
     return SignupAuthenticationState(
       signupStatus: signupStatus ?? this.signupStatus,
@@ -51,6 +54,7 @@ class SignupAuthenticationState extends Equatable {
       userCredential: userCredential ?? this.userCredential,
       userLogin: userLogin ?? this.userLogin,
       imageUpload: imageUpload ?? this.imageUpload,
+      imageUrl: imageUrl ?? this.imageUrl,
     );
   }
 
@@ -66,6 +70,7 @@ class SignupAuthenticationState extends Equatable {
         databaseReference,
         userLogin,
         userCredential,
-        imageUpload
+        imageUpload,
+        imageUrl,
       ];
 }

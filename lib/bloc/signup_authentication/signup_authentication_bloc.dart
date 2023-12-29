@@ -127,28 +127,56 @@ class SignupAuthenticationBloc
   }
 
   Future<void> _uploadImage(UploadImage event, Emitter emit) async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
-    if (pickedFile != null) {
-      File imageUp = File(pickedFile.path);
-      emit(
-        state.copyWith(
-          imageUpload: imageUp,
-        ),
-      );
+      if (pickedFile != null) {
+        File imageUp = File(pickedFile.path);
 
-      try {
-        UploadTask imageUploded = FirebaseStorage.instance
+        emit(
+          state.copyWith(
+            imageUpload: imageUp,
+            signupStatus: SignupStatus.loading,
+          ),
+        );
+
+        UploadTask imageUploaded = FirebaseStorage.instance
             .ref()
             .child('images')
-            .putFile(File(pickedFile.path));
-        log(state.imageUpload.path);
+            .child('${DateTime.now()}.png')
+            .putFile(imageUp);
 
-        await imageUploded.snapshot.ref.getDownloadURL();
-      } catch (e) {
-        log('Error upload: $e');
+        TaskSnapshot snapshot = await imageUploaded;
+        String imageUrl = await snapshot.ref.getDownloadURL();
+
+        if (imageUrl.isNotEmpty) {
+          emit(
+            state.copyWith(
+              imageUrl: imageUrl,
+              signupStatus: SignupStatus.completed,
+            ),
+          );
+        } else {
+          emit(
+            state.copyWith(
+              signupStatus: SignupStatus.error,
+              error: 'Error: Image URL is null.',
+            ),
+          );
+        }
+
+        // Log the image URL for verification
+        log('Image URL: $imageUrl');
       }
+    } catch (e) {
+      emit(
+        state.copyWith(
+          signupStatus: SignupStatus.error,
+          error: 'Error uploading image: $e',
+        ),
+      );
+      log('Error uploading image: $e');
     }
   }
 }

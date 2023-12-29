@@ -1,5 +1,5 @@
+import 'dart:async';
 import 'dart:developer';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -68,27 +68,51 @@ class _SignInScreenState extends State<SignInScreen> {
                   child: BlocBuilder<SignupAuthenticationBloc,
                       SignupAuthenticationState>(
                     builder: (context, state) {
-                      return firebaseUIButton(context, "Sign In", () {
+                      return firebaseUIButton(context, "Sign In", () async {
                         context.read<SignupAuthenticationBloc>().add(
                               SignInUser(
                                 email: _emailTextController.text,
                                 password: _passwordTextController.text,
                               ),
                             );
-                        if (state.signupStatus == SignupStatus.completed) {
-                          log('${state.databaseReference.child('Users').child('id')}');
 
-                          if (state.databaseReference.path
-                              .contains('Elders')) {}
-                          Users user =
-                              getUserSomehow(); // Replace with your logic
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const CgDashboard(),
-                              // JobRequestsPage(user: user),
-                            ),
-                          );
+                        if (state.signupStatus == SignupStatus.completed) {
+                          try {
+                            String role = await getUserRoleSomehow();
+                            String userId = await getUserIdSomehow();
+
+                            if (role == 'Elders') {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      AcceptedRequestsPage(userId: userId),
+                                ),
+                              );
+                            } else if (role == 'Caregiver') {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => CgDashboard(),
+                                ),
+                              );
+                            } else {
+                              // Handle unexpected role or navigate to a default screen
+                            }
+                          } catch (e) {
+                            log(state.error);
+                            // Handle errors
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Error: $e',
+                                  style: const TextStyle(
+                                    color: Colors.red,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
                         }
                         if (state.signupStatus == SignupStatus.error) {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -119,7 +143,7 @@ class _SignInScreenState extends State<SignInScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text("Don't have account?",
+        const Text("Don't have an account?",
             style: TextStyle(color: Colors.white70)),
         GestureDetector(
           onTap: () {
@@ -160,23 +184,65 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 
-  Users getUserSomehow() {
-    // Replace this with the actual logic to retrieve the authenticated user
-    // Example: If you are using Firebase Authentication
-    User? firebaseUser = FirebaseAuth.instance.currentUser;
+  Future<String> getUserRoleSomehow() async {
+    try {
+      User? firebaseUser = FirebaseAuth.instance.currentUser;
 
-    if (firebaseUser != null) {
-      // You may need to map FirebaseUser properties to your User model
-      return Users(
-        id: 0,
-        username: firebaseUser.displayName ?? 'No Username',
-        email: firebaseUser.email ?? 'No Email',
-        role: 'Elders', // You may need additional logic to determine the role
-      );
-    } else {
-      // Handle the case where the user is not authenticated
-      // You may navigate to the sign-in screen or take appropriate action
-      throw Exception('User not authenticated');
+      if (firebaseUser != null) {
+        final DatabaseReference _databaseReference =
+            FirebaseDatabase.instance.ref().child('user');
+        DataSnapshot dataSnapshot = await _databaseReference.get();
+
+        if (dataSnapshot.value != null) {
+          Map<String, dynamic> userData =
+              (dataSnapshot.value! as Map<dynamic, dynamic>)
+                  .cast<String, dynamic>();
+          String role = userData['role'].toString();
+          return role;
+        } else {
+          throw Exception('User data not found'); // Handle missing data
+        }
+      } else {
+        throw Exception(
+            'User not authenticated'); // Handle unauthenticated case
+      }
+    } catch (e) {
+      // Handle any errors that may occur during the process
+      // Consider logging or displaying appropriate error messages
+      rethrow; // Rethrow the exception to allow higher-level handling
+    }
+  }
+
+  Future<String> getUserIdSomehow() async {
+    try {
+      User? firebaseUser = FirebaseAuth.instance.currentUser;
+
+      if (firebaseUser != null) {
+        DatabaseReference databaseReference = FirebaseDatabase.instance
+            .ref()
+            .child('Users')
+            .child(firebaseUser.uid);
+
+        // Retrieve user data using `get()` instead of `once()`
+        DataSnapshot snapshot = await databaseReference.get();
+
+        if (snapshot.value != null) {
+          Map<String, dynamic> userData =
+              (snapshot.value! as Map<dynamic, dynamic>)
+                  .cast<String, dynamic>();
+          String userId = userData['id'].toString();
+          return userId;
+        } else {
+          throw Exception('User data not found'); // Handle missing data
+        }
+      } else {
+        throw Exception(
+            'User not authenticated'); // Handle unauthenticated case
+      }
+    } catch (e) {
+      // Handle any errors that may occur during the process
+      // Consider logging or displaying appropriate error messages
+      rethrow; // Rethrow the exception to allow higher-level handling
     }
   }
 }
