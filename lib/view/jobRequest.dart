@@ -27,45 +27,47 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
   }
 
   void _loadJobRequests() {
-    _databaseReference.onValue.listen((event) {
-      if (event.snapshot.value != null) {
-        List<Map<String, dynamic>> requests = [];
-        Map<dynamic, dynamic> values =
-            event.snapshot.value as Map<dynamic, dynamic>;
+    _databaseReference.onValue.listen(
+      (event) {
+        if (event.snapshot.value != null) {
+          List<Map<String, dynamic>> requests = [];
+          Map<dynamic, dynamic> values =
+              event.snapshot.value as Map<dynamic, dynamic>;
 
-        values.forEach((key, value) {
-          print('Key: $key, Value: $value');
-          if (value is Map<dynamic, dynamic> &&
-                  value.containsKey('id') &&
-                  value['id'].toString() == widget.id &&
-                  (value['status'] == 'accepted') ||
-              value['status'] == 'pending') {
-            requests.add({
-              'key': key,
-              'jobName': value['jobName'],
-              'location': value['location'],
-              'email': value['email'],
-              'status': value['status'],
-              'createdAt': value['createdAt'],
-              'priceOffer': value['priceOffer'],
-              'id': value['id'],
-              'remainingTimeSeconds':
-                  _calculateRemainingTime(value['createdAt']),
-              'jobId': value['jobId'],
-            });
-          }
-        });
+          values.forEach((key, value) {
+            print('Key: $key, Value: $value');
+            if (value is Map<dynamic, dynamic> &&
+                    value.containsKey('id') &&
+                    value['id'].toString() == widget.id &&
+                    (value['status'] == 'accepted') ||
+                value['status'] == 'pending') {
+              requests.add({
+                'key': key,
+                'jobName': value['jobName'],
+                'location': value['location'],
+                'email': value['email'],
+                'status': value['status'],
+                'createdAt': value['createdAt'],
+                'priceOffer': value['priceOffer'],
+                'id': value['id'],
+                'remainingTimeSeconds':
+                    _calculateRemainingTime(value['createdAt']),
+                'jobId': value['jobId'],
+              });
+            }
+          });
 
-        // Sort the requests by createdAt in descending order
-        requests.sort((a, b) => b['createdAt'].compareTo(a['createdAt']));
+          // Sort the requests by createdAt in descending order
+          requests.sort((a, b) => b['createdAt'].compareTo(a['createdAt']));
 
-        setState(() {
-          jobRequests = requests;
-        });
+          setState(() {
+            jobRequests = requests;
+          });
 
-        _startCountdownTimer();
-      }
-    });
+          _startCountdownTimer();
+        }
+      },
+    );
   }
 
   int _calculateRemainingTime(dynamic createdAt) {

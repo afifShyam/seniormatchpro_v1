@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'dart:io';
 
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
@@ -163,7 +164,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         color: Colors.black.withOpacity(0.3),
                         spreadRadius: 2,
                         blurRadius: 5,
-                        offset: Offset(0, 3),
+                        offset: const Offset(0, 3),
                       ),
                     ],
                     image: DecorationImage(
@@ -203,26 +204,65 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   }
 
-  void _signUp(BuildContext context) {
+  Future<void> _signUp(BuildContext context) async {
     final signupBloc = context.read<SignupAuthenticationBloc>();
 
     if (_validateInputs()) {
-      signupBloc.add(
-        SignUpRealtimeDatabaseUser(
-          username: _userNameTextController.text,
-          email: _emailTextController.text,
-          password: _passwordTextController.text,
-          role: dropdownValue,
-          image: imageFile!.path,
-        ),
-      );
+      // Check if the username already exists in the database
+      await _checkUsernameExists(context, () async {
+        // If the username is unique, proceed with sign-up
+        signupBloc.add(
+          SignUpRealtimeDatabaseUser(
+            username: _userNameTextController.text,
+            email: _emailTextController.text,
+            password: _passwordTextController.text,
+            role: dropdownValue,
+            image: imageFile?.path ??
+                '', // Use an empty string if imageFile is null
+          ),
+        );
 
-      signupBloc.add(
-        SignUpAuthenticationUser(
-          email: _emailTextController.text,
-          password: _passwordTextController.text,
-        ),
-      );
+        signupBloc.add(
+          SignUpAuthenticationUser(
+            email: _emailTextController.text,
+            password: _passwordTextController.text,
+          ),
+        );
+      }, dropdownValue, _userNameTextController.text);
+    }
+  }
+
+  Future<void> _checkUsernameExists(
+    BuildContext context,
+    VoidCallback onUsernameAvailable,
+    String role,
+    String username,
+  ) async {
+    try {
+      final DatabaseReference reference =
+          FirebaseDatabase.instance.ref().child('user').child(role);
+
+      final DatabaseEvent snapshot = await reference
+          .orderByChild('username')
+          .equalTo(username)
+          .once(); // Use 'once' to retrieve the result
+      log('${snapshot.snapshot.value}');
+      if (snapshot.snapshot.value != null && context.mounted) {
+        // Username already exists, show an error
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content:
+                Text('Username already exists. Please choose another one.'),
+          ),
+        );
+      } else {
+        // Username is unique, proceed with sign-up
+        onUsernameAvailable(); // Await if asynchronous
+      }
+    } catch (error) {
+      // Handle the error appropriately
+      print('Error checking username existence: $error');
+      // Consider showing an error message to the user
     }
   }
 
@@ -257,17 +297,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
       BuildContext context, String label, VoidCallback onPressed) {
     return ElevatedButton(
       onPressed: onPressed,
-      child: Text(
-        label,
-        style: TextStyle(fontSize: 18),
-      ),
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
-        padding: EdgeInsets.symmetric(vertical: 15, horizontal: 30),
+        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(30),
         ),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(fontSize: 18),
       ),
     );
   }

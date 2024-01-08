@@ -78,29 +78,31 @@ class _SignInScreenState extends State<SignInScreen> {
 
                         if (state.signupStatus == SignupStatus.completed) {
                           try {
-                            String role = await getUserRoleSomehow();
-                            String userId = await getUserIdSomehow();
+                            // String role = await getUserRoleSomehow();
+                            String userId1 =
+                                await userId(_emailTextController.text);
+                            log('id dia sekarang $userId1');
 
-                            if (role == 'Elders') {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      AcceptedRequestsPage(userId: userId),
-                                ),
-                              );
-                            } else if (role == 'Caregiver') {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => CgDashboard(),
-                                ),
-                              );
-                            } else {
-                              // Handle unexpected role or navigate to a default screen
-                            }
+                            // if (role == 'Elders' && context.mounted) {
+                            // Navigator.push(
+                            //   context,
+                            //   MaterialPageRoute(
+                            //     builder: (context) =>
+                            //         AcceptedRequestsPage(userId: userId1),
+                            //   ),
+                            // );
+                            // // } else if (role == 'Caregiver' && context.mounted) {
+                            // Navigator.push(
+                            //   context,
+                            //   MaterialPageRoute(
+                            //     builder: (context) => const CgDashboard(),
+                            //   ),
+                            // );
+                            // } else {
+                            //   // Handle unexpected role or navigate to a default screen
+                            // }
                           } catch (e) {
-                            log(state.error);
+                            log('error :${state.error}');
                             // Handle errors
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
@@ -114,7 +116,8 @@ class _SignInScreenState extends State<SignInScreen> {
                             );
                           }
                         }
-                        if (state.signupStatus == SignupStatus.error) {
+                        if (state.signupStatus == SignupStatus.error &&
+                            context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
@@ -184,65 +187,107 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 
-  Future<String> getUserRoleSomehow() async {
-    try {
-      User? firebaseUser = FirebaseAuth.instance.currentUser;
+  // Future<String> getUserRoleSomehow() async {
+  //   try {
+  //     User? firebaseUser = FirebaseAuth.instance.currentUser;
 
-      if (firebaseUser != null) {
-        final DatabaseReference _databaseReference =
-            FirebaseDatabase.instance.ref().child('user');
-        DataSnapshot dataSnapshot = await _databaseReference.get();
+  //     if (firebaseUser != null) {
+  //       final DatabaseReference databaseReference =
+  //           FirebaseDatabase.instance.ref().child('user').child('1');
+  //       DataSnapshot dataSnapshot = await databaseReference.get();
 
-        if (dataSnapshot.value != null) {
-          Map<String, dynamic> userData =
-              (dataSnapshot.value! as Map<dynamic, dynamic>)
-                  .cast<String, dynamic>();
-          String role = userData['role'].toString();
-          return role;
-        } else {
-          throw Exception('User data not found'); // Handle missing data
-        }
-      } else {
-        throw Exception(
-            'User not authenticated'); // Handle unauthenticated case
-      }
-    } catch (e) {
-      // Handle any errors that may occur during the process
-      // Consider logging or displaying appropriate error messages
-      rethrow; // Rethrow the exception to allow higher-level handling
-    }
-  }
+  //       if (dataSnapshot.value != null) {
+  //         Map<String, dynamic> userData =
+  //             (dataSnapshot.value! as Map<dynamic, dynamic>)
+  //                 .cast<String, dynamic>();
+  //         String role = userData['role'].toString();
+  //         return role;
+  //       } else {
+  //         throw Exception('User data not found'); // Handle missing data
+  //       }
+  //     } else {
+  //       throw Exception(
+  //           'User not authenticated'); // Handle unauthenticated case
+  //     }
+  //   } catch (e) {
+  //     // Handle any errors that may occur during the process
+  //     // Consider logging or displaying appropriate error messages
+  //     rethrow; // Rethrow the exception to allow higher-level handling
+  //   }
+  // }
 
   Future<String> getUserIdSomehow() async {
+    Completer<String> completer = Completer<String>();
+
     try {
       User? firebaseUser = FirebaseAuth.instance.currentUser;
 
       if (firebaseUser != null) {
         DatabaseReference databaseReference = FirebaseDatabase.instance
             .ref()
-            .child('Users')
-            .child(firebaseUser.uid);
+            .child('user')
+            .child('${firebaseUser.uid}');
+        // .child('3');
+        log('${firebaseUser.uid}');
 
-        // Retrieve user data using `get()` instead of `once()`
-        DataSnapshot snapshot = await databaseReference.get();
-
-        if (snapshot.value != null) {
-          Map<String, dynamic> userData =
-              (snapshot.value! as Map<dynamic, dynamic>)
-                  .cast<String, dynamic>();
-          String userId = userData['id'].toString();
-          return userId;
-        } else {
-          throw Exception('User data not found'); // Handle missing data
-        }
+        databaseReference.once().then((event) {
+          DataSnapshot snapshot = event.snapshot;
+          if (snapshot.value != null) {
+            Map<String, dynamic> userData =
+                (snapshot.value! as Map<dynamic, dynamic>)
+                    .cast<String, dynamic>();
+            String userId = userData['id'].toString();
+            log('id-----${userId}');
+            completer.complete(userId);
+          } else {
+            completer.completeError(Exception('User data not found'));
+          }
+        });
       } else {
-        throw Exception(
-            'User not authenticated'); // Handle unauthenticated case
+        completer.completeError(Exception('User not authenticated'));
       }
     } catch (e) {
-      // Handle any errors that may occur during the process
-      // Consider logging or displaying appropriate error messages
-      rethrow; // Rethrow the exception to allow higher-level handling
+      completer.completeError(e);
     }
+
+    return completer.future;
+  }
+
+  Future<String> userId(
+    String email,
+  ) async {
+    String id = '9';
+
+    try {
+      final DatabaseReference reference =
+          FirebaseDatabase.instance.ref().child('user').child('Caregiver');
+
+      final DatabaseEvent snapshot = await reference
+          .orderByChild('email')
+          .equalTo(email)
+          .once(); // Use 'once' to retrieve the result
+      log('message : ${snapshot.snapshot.value != null}');
+
+      if (snapshot.snapshot.value != null) {
+        // Username already exists, extract role and ID
+        final Map<dynamic, dynamic> userMap =
+            snapshot.snapshot.value as Map<dynamic, dynamic>;
+        final String data = userMap.keys.first;
+        String userRole = userMap[data]['role'];
+        int userRole1 = userMap[data]['id'];
+
+        // Now you can use userId and userRole as needed
+        log('message : ${userRole}');
+
+        setState(() => id = userRole);
+
+        // return userRole;
+      }
+    } catch (error) {
+      // Handle the error appropriately
+      log('Error checking username existence: $error');
+      // Consider showing an error message to the user
+    }
+    return id;
   }
 }

@@ -1,7 +1,7 @@
 import 'dart:developer';
 import 'dart:io';
 
-import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -24,7 +24,7 @@ class SignupAuthenticationBloc
   Future<int> getNextId() async {
     // Get the current maximum ID from the database.
     final databaseReference =
-        FirebaseDatabase.instance.ref().child('user/currentUser');
+        FirebaseDatabase.instance.ref().child('user/totalUser');
     final snapshot = await databaseReference.get();
 
     // If the maxId does not exist, initialize it to 0.
@@ -64,9 +64,10 @@ class SignupAuthenticationBloc
         'role': event.role,
         'image': event.image,
       };
-
       // generate unique key
-      final userRef = databaseReference.child('/$id');
+      // final key = databaseReference.push().key;
+      final userRef =
+          databaseReference.child('/${event.role}').child('/${event.username}');
 
       // Set user data at the generated reference
       await userRef.set(userData);
