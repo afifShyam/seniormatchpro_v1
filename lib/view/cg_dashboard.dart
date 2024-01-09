@@ -1,10 +1,12 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:seniormatchpro_v1/index.dart';
 
 class CgDashboard extends StatefulWidget {
-  const CgDashboard({Key? key, required this.id}) : super(key: key);
+  const CgDashboard({super.key, required this.id});
 
   final String id;
 
@@ -16,11 +18,14 @@ class _CgDashboardState extends State<CgDashboard> {
   final dataUser = FirebaseDatabase.instance.ref().child('user/Elders');
   final databaseRef = FirebaseDatabase.instance.ref();
   List<Map<String, dynamic>> userData = [];
+  late Timer timer;
 
   @override
   void initState() {
     super.initState();
     fetchData();
+    timer =
+        Timer.periodic(const Duration(seconds: 5), (Timer t) => fetchData());
   }
 
   Future<void> fetchData() async {

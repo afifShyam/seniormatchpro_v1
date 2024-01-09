@@ -83,7 +83,6 @@ class _SignInScreenState extends State<SignInScreen> {
                               userRole = await _getUserRole(
                                   userId, _emailController.text);
                               if (context.mounted) {
-                                log('tahi kamu:$userRole');
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -95,6 +94,8 @@ class _SignInScreenState extends State<SignInScreen> {
                             } else {
                               userRole = await _getUserRole(
                                   userId, _emailController.text);
+                              log('tahi kamu:$userRole');
+
                               if (context.mounted) {
                                 Navigator.push(
                                   context,
