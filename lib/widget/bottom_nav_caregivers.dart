@@ -3,16 +3,16 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:seniormatchpro_v1/view/index.dart';
 
-class BottomNavbar extends StatefulWidget {
-  const BottomNavbar({super.key, required this.id});
+class BottomNavbarCaregivers extends StatefulWidget {
+  const BottomNavbarCaregivers({super.key, required this.id});
 
   final String id;
 
   @override
-  State<BottomNavbar> createState() => _BottomNavbarState();
+  State<BottomNavbarCaregivers> createState() => _BottomNavbarState();
 }
 
-class _BottomNavbarState extends State<BottomNavbar> {
+class _BottomNavbarState extends State<BottomNavbarCaregivers> {
   int _currentIndex = 0;
 
   @override
@@ -22,9 +22,11 @@ class _BottomNavbarState extends State<BottomNavbar> {
       onTap: (int newIndex) {
         setState(() {
           _currentIndex = newIndex;
-          log('$_currentIndex');
+          log('${widget.id}');
         });
-        if (_currentIndex == 0) {}
+        if (_currentIndex == 0) {
+          log(widget.id);
+        }
         if (_currentIndex == 1) {
           Navigator.push(
             context,

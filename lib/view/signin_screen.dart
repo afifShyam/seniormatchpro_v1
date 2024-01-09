@@ -83,6 +83,7 @@ class _SignInScreenState extends State<SignInScreen> {
                               userRole = await _getUserRole(
                                   userId, _emailController.text);
                               if (context.mounted) {
+                                log('tahi kamu:$userRole');
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -94,19 +95,17 @@ class _SignInScreenState extends State<SignInScreen> {
                             } else {
                               userRole = await _getUserRole(
                                   userId, _emailController.text);
+                              if (context.mounted) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        CgDashboard(id: userRole),
+                                  ),
+                                );
+                              }
                             }
                             log(userId);
-
-                            if (userId == 'Caregiver' && context.mounted) {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const CgDashboard(),
-                                ),
-                              );
-                            } else {
-                              // Handle unexpected role or navigate to a default screen
-                            }
                           } catch (e) {
                             log('error :${state.error}');
                             ScaffoldMessenger.of(context).showSnackBar(

@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:seniormatchpro_v1/index.dart';
 
 class CgDashboard extends StatefulWidget {
-  const CgDashboard({Key? key}) : super(key: key);
+  const CgDashboard({Key? key, required this.id}) : super(key: key);
+
+  final String id;
 
   @override
   State<CgDashboard> createState() => _CgDashboardState();
@@ -48,8 +50,6 @@ class _CgDashboardState extends State<CgDashboard> {
           });
         }
       }
-
-      setState(() {});
     } catch (error) {
       print("Error fetching data: $error");
     }
@@ -151,7 +151,7 @@ class _CgDashboardState extends State<CgDashboard> {
           },
         ),
       ),
-      bottomNavigationBar: const BottomNavbar(),
+      bottomNavigationBar: BottomNavbarCaregivers(id: widget.id),
     );
   }
 }

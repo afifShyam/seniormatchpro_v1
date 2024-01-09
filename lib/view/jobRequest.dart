@@ -2,14 +2,15 @@ import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:seniormatchpro_v1/index.dart';
 
 class JobRequestsPage extends StatefulWidget {
   final String id;
 
-  const JobRequestsPage({Key? key, required this.id}) : super(key: key);
+  const JobRequestsPage({super.key, required this.id});
 
   @override
-  _JobRequestsPageState createState() => _JobRequestsPageState();
+  State<JobRequestsPage> createState() => _JobRequestsPageState();
 }
 
 class _JobRequestsPageState extends State<JobRequestsPage> {
@@ -113,6 +114,7 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: const SizedBox(),
         title: const Text('Job Requests'),
         centerTitle: true,
         backgroundColor: Colors.blueGrey,
@@ -125,6 +127,7 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
           child: _buildJobRequestsList(),
         ),
       ),
+      bottomNavigationBar: BottomNavbarCaregivers(id: widget.id),
     );
   }
 

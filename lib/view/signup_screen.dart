@@ -62,10 +62,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
               );
               log(state.error);
             } else if (state.signupStatus == SignupStatus.completed) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const CgDashboard()),
-              );
+              // Navigator.push(
+              //   context,
+              //   MaterialPageRoute(builder: (context) => const CgDashboard()),
+              // );
             }
           },
           child: bodyContent(context),
