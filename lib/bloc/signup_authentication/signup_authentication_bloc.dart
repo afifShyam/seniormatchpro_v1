@@ -1,7 +1,12 @@
-import 'package:bloc/bloc.dart';
+import 'dart:developer';
+import 'dart:io';
+
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
 
 part 'signup_authentication_event.dart';
 part 'signup_authentication_state.dart';
@@ -12,13 +17,14 @@ class SignupAuthenticationBloc
     on<SignUpRealtimeDatabaseUser>(_userSignUpUser);
     on<SignUpAuthenticationUser>(_userSignUpAuth);
     on<SignInUser>(_signInUser);
+    on<UploadImage>(_uploadImage);
   }
 
   //count currentUser
   Future<int> getNextId() async {
     // Get the current maximum ID from the database.
     final databaseReference =
-        FirebaseDatabase.instance.ref().child('user/currentUser');
+        FirebaseDatabase.instance.ref().child('user/totalUser');
     final snapshot = await databaseReference.get();
 
     // If the maxId does not exist, initialize it to 0.
@@ -48,7 +54,7 @@ class SignupAuthenticationBloc
 
       // Get the next ID for the new user.
       final id = await getNextId();
-      print('ID: $id');
+      print('ID: ${state.imageUpload}');
 
       final userData = {
         'id': id,
@@ -56,10 +62,12 @@ class SignupAuthenticationBloc
         'email': event.email,
         'password': event.password,
         'role': event.role,
+        'image': event.image,
       };
-
       // generate unique key
-      final userRef = databaseReference.child('/$id');
+      // final key = databaseReference.push().key;
+      final userRef =
+          databaseReference.child('/${event.role}').child('/${event.username}');
 
       // Set user data at the generated reference
       await userRef.set(userData);
@@ -116,6 +124,60 @@ class SignupAuthenticationBloc
       ));
     } catch (e) {
       emit(state.copyWith(error: 'Error $e'));
+    }
+  }
+
+  Future<void> _uploadImage(UploadImage event, Emitter emit) async {
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+      if (pickedFile != null) {
+        File imageUp = File(pickedFile.path);
+
+        emit(
+          state.copyWith(
+            imageUpload: imageUp,
+            signupStatus: SignupStatus.loading,
+          ),
+        );
+
+        UploadTask imageUploaded = FirebaseStorage.instance
+            .ref()
+            .child('images')
+            .child('${DateTime.now()}.png')
+            .putFile(imageUp);
+
+        TaskSnapshot snapshot = await imageUploaded;
+        String imageUrl = await snapshot.ref.getDownloadURL();
+
+        if (imageUrl.isNotEmpty) {
+          emit(
+            state.copyWith(
+              imageUrl: imageUrl,
+              signupStatus: SignupStatus.completed,
+            ),
+          );
+        } else {
+          emit(
+            state.copyWith(
+              signupStatus: SignupStatus.error,
+              error: 'Error: Image URL is null.',
+            ),
+          );
+        }
+
+        // Log the image URL for verification
+        log('Image URL: $imageUrl');
+      }
+    } catch (e) {
+      emit(
+        state.copyWith(
+          signupStatus: SignupStatus.error,
+          error: 'Error uploading image: $e',
+        ),
+      );
+      log('Error uploading image: $e');
     }
   }
 }

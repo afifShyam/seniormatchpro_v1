@@ -16,6 +16,7 @@ void main() async {
   }
 
   runApp(BlocProvider(
+    lazy: false,
     create: (context) => SignupAuthenticationBloc(),
     child: const MyApp(),
   ));

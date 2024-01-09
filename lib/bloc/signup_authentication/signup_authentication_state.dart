@@ -14,14 +14,17 @@ class SignupAuthenticationState extends Equatable {
   final DatabaseReference databaseReference;
   final UserCredential? userCredential;
   final UserCredential? userLogin;
+  final File imageUpload;
+  final String imageUrl;
 
-  const SignupAuthenticationState({
-    required this.signupStatus,
-    required this.error,
-    required this.databaseReference,
-    this.userCredential,
-    this.userLogin,
-  });
+  const SignupAuthenticationState(
+      {required this.signupStatus,
+      required this.error,
+      required this.databaseReference,
+      this.userCredential,
+      this.userLogin,
+      required this.imageUpload,
+      required this.imageUrl});
 
   factory SignupAuthenticationState.initial() {
     return SignupAuthenticationState(
@@ -30,6 +33,8 @@ class SignupAuthenticationState extends Equatable {
       databaseReference: FirebaseDatabase.instance.ref().child('user/'),
       userCredential: null,
       userLogin: null,
+      imageUpload: File(''),
+      imageUrl: '',
     );
   }
 
@@ -39,6 +44,8 @@ class SignupAuthenticationState extends Equatable {
     DatabaseReference? databaseReference,
     UserCredential? userCredential,
     UserCredential? userLogin,
+    File? imageUpload,
+    String? imageUrl,
   }) {
     return SignupAuthenticationState(
       signupStatus: signupStatus ?? this.signupStatus,
@@ -46,6 +53,8 @@ class SignupAuthenticationState extends Equatable {
       databaseReference: databaseReference ?? this.databaseReference,
       userCredential: userCredential ?? this.userCredential,
       userLogin: userLogin ?? this.userLogin,
+      imageUpload: imageUpload ?? this.imageUpload,
+      imageUrl: imageUrl ?? this.imageUrl,
     );
   }
 
@@ -55,6 +64,13 @@ class SignupAuthenticationState extends Equatable {
   }
 
   @override
-  List<dynamic> get props =>
-      [signupStatus, error, databaseReference, userLogin];
+  List<dynamic> get props => [
+        signupStatus,
+        error,
+        databaseReference,
+        userLogin,
+        userCredential,
+        imageUpload,
+        imageUrl,
+      ];
 }
