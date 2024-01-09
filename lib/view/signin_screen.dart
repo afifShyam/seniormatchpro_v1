@@ -14,9 +14,9 @@ class SignInScreen extends StatefulWidget {
 }
 
 class _SignInScreenState extends State<SignInScreen> {
-  final TextEditingController _passwordTextController = TextEditingController();
-  final TextEditingController _emailTextController = TextEditingController();
-  String roleEnter = '';
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  String userRole = '';
 
   @override
   Widget build(BuildContext context) {
@@ -42,27 +42,21 @@ class _SignInScreenState extends State<SignInScreen> {
             child: Column(
               children: <Widget>[
                 logoWidget("assets/images/logo1.png"),
-                const SizedBox(
-                  height: 30,
-                ),
+                const SizedBox(height: 30),
                 reusableTextField(
                   "Enter Email",
                   Icons.person_outline,
                   false,
-                  _emailTextController,
+                  _emailController,
                 ),
-                const SizedBox(
-                  height: 20,
-                ),
+                const SizedBox(height: 20),
                 reusableTextField(
                   "Enter Password",
                   Icons.lock_outline,
                   true,
-                  _passwordTextController,
+                  _passwordController,
                 ),
-                const SizedBox(
-                  height: 5,
-                ),
+                const SizedBox(height: 5),
                 forgetPassword(context),
                 BlocProvider(
                   create: (context) => SignupAuthenticationBloc(),
@@ -72,42 +66,38 @@ class _SignInScreenState extends State<SignInScreen> {
                       return firebaseUIButton(context, "Sign In", () async {
                         context.read<SignupAuthenticationBloc>().add(
                               SignInUser(
-                                email: _emailTextController.text,
-                                password: _passwordTextController.text,
+                                email: _emailController.text,
+                                password: _passwordController.text,
                               ),
                             );
 
                         if (state.signupStatus == SignupStatus.completed) {
                           try {
-                            String userId1 = await userIdCaregiver(
-                                _emailTextController.text);
-                            log('id dia sekarang $userId1');
+                            String userId =
+                                await _getUserIdByEmail(_emailController.text);
 
-                            if (userId1 == 'Elders') {
+                            if (userId == 'Elders') {
                               String roleElders =
-                                  await userIdElders(_emailTextController.text);
-                              String role = await getUserIdSomehow(
-                                  roleElders, _emailTextController.text);
-                              setState(() {
-                                roleEnter = role;
-                              });
-                            } else {
-                              String role = await getUserIdSomehow(
-                                  userId1, _emailTextController.text);
-                              setState(() {
-                                roleEnter = role;
-                              });
-                            }
+                                  await _getUserIdElders(_emailController.text);
 
-                            if (roleEnter == 'Elders' && context.mounted) {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      AcceptedRequestsPage(userId: roleEnter),
-                                ),
-                              );
-                              // } else if (role == 'Caregiver' && context.mounted) {
+                              userRole = await _getUserRole(
+                                  userId, _emailController.text);
+                              if (context.mounted) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        JobRequestsPage(id: userRole),
+                                  ),
+                                );
+                              }
+                            } else {
+                              userRole = await _getUserRole(
+                                  userId, _emailController.text);
+                            }
+                            log(userId);
+
+                            if (userId == 'Caregiver' && context.mounted) {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -119,7 +109,6 @@ class _SignInScreenState extends State<SignInScreen> {
                             }
                           } catch (e) {
                             log('error :${state.error}');
-                            // Handle errors
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
@@ -132,6 +121,7 @@ class _SignInScreenState extends State<SignInScreen> {
                             );
                           }
                         }
+
                         if (state.signupStatus == SignupStatus.error &&
                             context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -149,7 +139,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     },
                   ),
                 ),
-                signUpOption()
+                signUpOption(),
               ],
             ),
           ),
@@ -203,144 +193,74 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 
-  // Future<String> getUserRoleSomehow() async {
-  //   try {
-  //     User? firebaseUser = FirebaseAuth.instance.currentUser;
-
-  //     if (firebaseUser != null) {
-  //       final DatabaseReference databaseReference =
-  //           FirebaseDatabase.instance.ref().child('user').child('1');
-  //       DataSnapshot dataSnapshot = await databaseReference.get();
-
-  //       if (dataSnapshot.value != null) {
-  //         Map<String, dynamic> userData =
-  //             (dataSnapshot.value! as Map<dynamic, dynamic>)
-  //                 .cast<String, dynamic>();
-  //         String role = userData['role'].toString();
-  //         return role;
-  //       } else {
-  //         throw Exception('User data not found'); // Handle missing data
-  //       }
-  //     } else {
-  //       throw Exception(
-  //           'User not authenticated'); // Handle unauthenticated case
-  //     }
-  //   } catch (e) {
-  //     // Handle any errors that may occur during the process
-  //     // Consider logging or displaying appropriate error messages
-  //     rethrow; // Rethrow the exception to allow higher-level handling
-  //   }
-  // }
-
-  Future<String> getUserIdSomehow(String role, String email) async {
-    Completer<String> completer = Completer<String>();
+  Future<String> _getUserIdByEmail(String email) async {
+    String userId = 'Elders';
 
     try {
       final DatabaseReference reference =
           FirebaseDatabase.instance.ref().child('user').child('Caregiver');
 
-      final DatabaseEvent snapshot = await reference
-          .orderByChild('email')
-          .equalTo(email)
-          .once(); // Use 'once' to retrieve the result
-      log('message : ${snapshot.snapshot.value != null}');
+      final DatabaseEvent snapshot =
+          await reference.orderByChild('email').equalTo(email).once();
 
       if (snapshot.snapshot.value != null) {
-        // Username already exists, extract role and ID
         final Map<dynamic, dynamic> userMap =
             snapshot.snapshot.value as Map<dynamic, dynamic>;
         final String data = userMap.keys.first;
-        // String userRole = userMap[data]['role'];
-        String userRole1 = userMap[data]['id'].toString();
-
-        // Now you can use userId and userRole as needed
-        log('message : ${userRole1}');
-
-        // setState(() => id = userRole);
-
-        // return userRole;
+        userId = userMap[data]['role'];
+        // setState(() => userId = userMap[data]['id'].toString());
       }
-    } catch (e) {
-      completer.completeError(e);
+    } catch (error) {
+      log('Error getting user ID: $error');
     }
 
-    return completer.future;
+    return userId;
   }
 
-  Future<String> userIdCaregiver(
-    String email,
-  ) async {
-    String id = 'Elders';
+  Future<String> _getUserIdElders(String email) async {
+    String userId = 'Elders';
 
     try {
       final DatabaseReference reference =
-          FirebaseDatabase.instance.ref().child('user').child('Caregiver');
+          FirebaseDatabase.instance.ref().child('user').child(userId);
 
-      final DatabaseEvent snapshot = await reference
-          .orderByChild('email')
-          .equalTo(email)
-          .once(); // Use 'once' to retrieve the result
-      log('message : ${snapshot.snapshot.value != null}');
+      final DatabaseEvent snapshot =
+          await reference.orderByChild('email').equalTo(email).once();
 
       if (snapshot.snapshot.value != null) {
-        // Username already exists, extract role and ID
         final Map<dynamic, dynamic> userMap =
             snapshot.snapshot.value as Map<dynamic, dynamic>;
         final String data = userMap.keys.first;
-        String userRole = userMap[data]['role'];
-        int userRole1 = userMap[data]['id'];
-
-        // Now you can use userId and userRole as needed
-        log('message : ${userRole}');
-
-        setState(() => id = userRole);
-
-        // return userRole;
+        userId = userMap[data]['role'];
+        // setState(() => userId = userMap[data]['id'].toString());
       }
     } catch (error) {
-      // Handle the error appropriately
-      log('Error checking username existence: $error');
-      // Consider showing an error message to the user
+      log('Error getting user ID: $error');
     }
 
-    return id;
+    return userId;
   }
 
-  Future<String> userIdElders(
-    String email,
-  ) async {
-    String id = 'Elders';
+  Future<String> _getUserRole(String userId, String email) async {
+    String userRole = '';
 
     try {
       final DatabaseReference reference =
-          FirebaseDatabase.instance.ref().child('user').child(id);
+          FirebaseDatabase.instance.ref().child('user').child(userId);
 
-      final DatabaseEvent snapshot = await reference
-          .orderByChild('email')
-          .equalTo(email)
-          .once(); // Use 'once' to retrieve the result
-      log('message : ${snapshot.snapshot.value != null}');
+      final DatabaseEvent snapshot =
+          await reference.orderByChild('email').equalTo(email).once();
 
       if (snapshot.snapshot.value != null) {
-        // Username already exists, extract role and ID
         final Map<dynamic, dynamic> userMap =
             snapshot.snapshot.value as Map<dynamic, dynamic>;
         final String data = userMap.keys.first;
-        String userRole = userMap[data]['role'];
-        int userRole1 = userMap[data]['id'];
-
-        // Now you can use userId and userRole as needed
-        log('message : ${userRole}');
-
-        setState(() => id = userRole);
-
-        // return userRole;
+        userRole = userMap[data]['id'].toString();
       }
     } catch (error) {
-      // Handle the error appropriately
-      log('Error checking username existence: $error');
-      // Consider showing an error message to the user
+      log('Error getting user role: $error');
     }
-    return id;
+
+    return userRole;
   }
 }
