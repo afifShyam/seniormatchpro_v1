@@ -1,17 +1,20 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:async';
+
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:seniormatchpro_v1/index.dart';
 
 class AcceptedRequestsPage extends StatefulWidget {
   final String userId;
 
-  const AcceptedRequestsPage({Key? key, required this.userId})
-      : super(key: key);
+  const AcceptedRequestsPage({
+    super.key,
+    required this.userId,
+  });
 
   @override
-  _AcceptedRequestsPageState createState() => _AcceptedRequestsPageState();
+  State<AcceptedRequestsPage> createState() => _AcceptedRequestsPageState();
 }
 
 class _AcceptedRequestsPageState extends State<AcceptedRequestsPage> {
@@ -110,7 +113,7 @@ class _AcceptedRequestsPageState extends State<AcceptedRequestsPage> {
           child: _buildAcceptedRequestsList(),
         ),
       ),
-      bottomNavigationBar: BottomNavbarCaregivers(id: widget.userId),
+      // bottomNavigationBar: BottomNavbarCaregivers(id: widget.userId),
     );
   }
 

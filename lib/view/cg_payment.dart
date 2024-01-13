@@ -36,7 +36,7 @@ class _AcceptedJobListPageState extends State<AcceptedJobListPage> {
 
         values.forEach((key, value) {
           if (value is Map<dynamic, dynamic> &&
-              value['id'].toString() == widget.id &&
+              value['jobId'].toString() == widget.id &&
               (value['status'] == 'done_task' ||
                   value['status'] == 'completed')) {
             acceptedRequests.add({

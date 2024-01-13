@@ -87,7 +87,7 @@ class _SignInScreenState extends State<SignInScreen> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) =>
-                                        JobRequestsPage(id: userRole),
+                                        BottomNavbar(id: userRole),
                                   ),
                                 );
                               }
@@ -101,7 +101,7 @@ class _SignInScreenState extends State<SignInScreen> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) =>
-                                        CgDashboard(id: userRole),
+                                        BottomNavbarCaregivers(id: userRole),
                                   ),
                                 );
                               }
