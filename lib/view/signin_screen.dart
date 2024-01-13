@@ -83,24 +83,25 @@ class _SignInScreenState extends State<SignInScreen> {
                               userRole = await _getUserRole(
                                   userId, _emailController.text);
                               if (context.mounted) {
-                                log('tahi kamu:$userRole');
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) =>
-                                        JobRequestsPage(id: userRole),
+                                        BottomNavbar(id: userRole),
                                   ),
                                 );
                               }
                             } else {
                               userRole = await _getUserRole(
                                   userId, _emailController.text);
+                              log('tahi kamu:$userRole');
+
                               if (context.mounted) {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) =>
-                                        CgDashboard(id: userRole),
+                                        BottomNavbarCaregivers(id: userRole),
                                   ),
                                 );
                               }

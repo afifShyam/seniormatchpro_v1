@@ -1,10 +1,12 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:seniormatchpro_v1/index.dart';
 
 class CgDashboard extends StatefulWidget {
-  const CgDashboard({Key? key, required this.id}) : super(key: key);
+  const CgDashboard({super.key, required this.id});
 
   final String id;
 
@@ -13,14 +15,14 @@ class CgDashboard extends StatefulWidget {
 }
 
 class _CgDashboardState extends State<CgDashboard> {
-  final dataUser = FirebaseDatabase.instance.ref().child('user/Elders');
+  final dataUser = FirebaseDatabase.instance.ref().child('user/Caregiver');
   final databaseRef = FirebaseDatabase.instance.ref();
   List<Map<String, dynamic>> userData = [];
+  late Timer timer;
 
   @override
   void initState() {
     super.initState();
-    fetchData();
   }
 
   Future<void> fetchData() async {
@@ -55,6 +57,10 @@ class _CgDashboardState extends State<CgDashboard> {
     }
   }
 
+  Future<void> _refreshData() async {
+    await fetchData();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -87,71 +93,76 @@ class _CgDashboardState extends State<CgDashboard> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.only(
-          left: 15,
-          right: 15,
-        ),
-        child: ListView.builder(
-          itemCount: userData.length,
-          itemBuilder: (context, index) {
-            return GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => HirePage(
-                      id: userData[index]['id'].toString(),
-                      name: userData[index]['username'].toString(),
-                    ),
-                  ),
-                );
-              },
-              child: Card(
-                elevation: 5,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.all(
-                    Radius.circular(10),
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.person,
+      body: FutureBuilder(
+          future: _refreshData(),
+          builder: (context, snapshot) {
+            return Padding(
+              padding: const EdgeInsets.only(
+                left: 15,
+                right: 15,
+              ),
+              child: ListView.builder(
+                itemCount: userData.length,
+                itemBuilder: (context, index) {
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => HirePage(
+                            jobIdUser: widget.id,
+                            id: userData[index]['id'].toString(),
+                            name: userData[index]['username'].toString(),
+                          ),
+                        ),
+                      );
+                    },
+                    child: Card(
+                      elevation: 5,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(
+                          Radius.circular(10),
+                        ),
                       ),
-                      const SizedBox(
-                        width: 10,
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            userData[index]['username'] ?? 'No Name',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.person,
                             ),
-                          ),
-                          Text(
-                            userData[index]['status'] ?? 'No Status',
-                          ),
-                        ],
+                            const SizedBox(
+                              width: 10,
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  userData[index]['username'] ?? 'No Name',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  userData[index]['status'] ?? 'No Status',
+                                ),
+                              ],
+                            ),
+                            const Spacer(),
+                            const Icon(
+                              Icons.quick_contacts_mail_outlined,
+                            ),
+                          ],
+                        ),
                       ),
-                      const Spacer(),
-                      const Icon(
-                        Icons.quick_contacts_mail_outlined,
-                      ),
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                },
               ),
             );
-          },
-        ),
-      ),
-      bottomNavigationBar: BottomNavbarCaregivers(id: widget.id),
+          }),
+      // bottomNavigationBar: BottomNavbarCaregivers(id: widget.id),
     );
   }
 }

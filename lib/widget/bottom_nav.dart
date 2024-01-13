@@ -17,38 +17,48 @@ class _BottomNavbarState extends State<BottomNavbar> {
 
   @override
   Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: _currentIndex,
-      onTap: (int newIndex) {
-        setState(() {
-          _currentIndex = newIndex;
-          log('$_currentIndex');
-        });
-        if (_currentIndex == 0) {}
-        if (_currentIndex == 1) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AcceptedRequestsPage(userId: widget.id),
-            ),
-          );
-        }
-        if (_currentIndex == 2) {}
-      },
-      items: const [
-        BottomNavigationBarItem(
-          label: 'Home',
-          icon: Icon(Icons.home),
-        ),
-        BottomNavigationBarItem(
-          label: 'Menu',
-          icon: Icon(Icons.menu),
-        ),
-        BottomNavigationBarItem(
-          label: 'Profile',
-          icon: Icon(Icons.person),
-        ),
-      ],
+    return Scaffold(
+      body: _buildPage(_currentIndex),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (int newIndex) {
+          setState(() {
+            _currentIndex = newIndex;
+            log('${widget.id}');
+          });
+        },
+        items: const [
+          BottomNavigationBarItem(
+            label: 'Home',
+            icon: Icon(Icons.home),
+          ),
+          BottomNavigationBarItem(
+            label: 'Complete Job',
+            icon: Icon(Icons.menu),
+          ),
+          BottomNavigationBarItem(
+            label: 'Profile',
+            icon: Icon(Icons.person),
+          ),
+        ],
+      ),
     );
+  }
+
+  Widget _buildPage(int index) {
+    switch (index) {
+      case 0:
+        return CgDashboard(
+            id: widget.id); // Replace HomeScreen with your actual widget
+      case 1:
+        return AcceptedJobListPage(
+            id: widget.id); // Replace MenuScreen with your actual widget
+      case 2:
+        return Container();
+      // return ProfileScreen(
+      //     id: widget.id); // Replace ProfileScreen with your actual widget
+      default:
+        return Container();
+    }
   }
 }

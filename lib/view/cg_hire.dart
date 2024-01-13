@@ -1,18 +1,22 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:seniormatchpro_v1/view/index.dart';
+
 import 'package:intl/intl.dart';
 
 class HirePage extends StatefulWidget {
-  const HirePage({Key? key, required this.id, required this.name})
-      : super(key: key);
+  const HirePage(
+      {super.key,
+      required this.id,
+      required this.name,
+      required this.jobIdUser});
 
   final String id;
   final String name;
+  final String jobIdUser;
 
   @override
-  _HirePageState createState() => _HirePageState();
+  State<HirePage> createState() => _HirePageState();
 }
 
 class _HirePageState extends State<HirePage> {
@@ -103,51 +107,6 @@ class _HirePageState extends State<HirePage> {
               const SizedBox(
                 height: 10,
               ),
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => AcceptedJobListPage(
-                        id: widget.id,
-                      ),
-                    ),
-                  );
-                },
-                child: const Icon(Icons.account_circle),
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => AcceptedRequestsPage(
-                        userId: widget.id,
-                      ),
-                    ),
-                  );
-                },
-                child: const Icon(Icons.adb_sharp),
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => AcceptedRequestsPage(
-                        userId: widget.id,
-                      ),
-                    ),
-                  );
-                },
-                child: const Icon(Icons.rocket),
-              ),
             ],
           ),
         ),
@@ -160,14 +119,14 @@ class _HirePageState extends State<HirePage> {
     String requestId = _databaseReference.push().key ?? '';
 
     // Generate a unique jobId starting from 101
-    int jobIdCounter = 101;
-    String jobId = 'job_$jobIdCounter';
+    // int jobIdCounter = 101;
+    // String jobId = 'job_$jobIdCounter';
 
     // Increment the counter for the next job
-    jobIdCounter++;
+    // jobIdCounter++;
     _databaseReference.child(requestId).set({
       'id': id,
-      'jobId': jobId,
+      'jobId': widget.jobIdUser,
       'jobName': jobName,
       'priceOffer': price,
       'location': location,
@@ -186,6 +145,7 @@ class _HirePageState extends State<HirePage> {
           actions: [
             TextButton(
               onPressed: () {
+                Navigator.of(context).pop();
                 Navigator.of(context).pop();
               },
               child: const Text('OK'),

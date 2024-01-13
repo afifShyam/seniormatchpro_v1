@@ -27,6 +27,12 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
     _startCountdownTimer();
   }
 
+  @override
+  void dispose() {
+    _timer?.cancel(); // Cancel the timer when the page is disposed
+    super.dispose();
+  }
+
   void _loadJobRequests() {
     _databaseReference.onValue.listen(
       (event) {
@@ -127,7 +133,7 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
           child: _buildJobRequestsList(),
         ),
       ),
-      bottomNavigationBar: BottomNavbarCaregivers(id: widget.id),
+      // bottomNavigationBar: BottomNavbarCaregivers(id: widget.id),
     );
   }
 
@@ -240,11 +246,5 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
         ],
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel(); // Cancel the timer when the page is disposed
-    super.dispose();
   }
 }
