@@ -54,8 +54,9 @@ class _BottomNavbarState extends State<BottomNavbarCaregivers> {
         return AcceptedRequestsPage(
             userId: widget.id); // Replace MenuScreen with your actual widget
       case 2:
-        return AcceptedJobListPage(
-          id: widget.id,
+        return UserProfile(
+          name: 'Names',
+          email: 'hehe',
         );
       // return ProfileScreen(id: widget.id); // Replace ProfileScreen with your actual widget
       default:

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:intl/intl.dart';
+import 'package:seniormatchpro_v1/view/jobRequest.dart';
 
 class HirePage extends StatefulWidget {
   const HirePage(

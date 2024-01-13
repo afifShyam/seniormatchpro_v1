@@ -7,5 +7,5 @@ export 'cg_hire.dart';
 export 'jobRequest.dart';
 export 'cg_payment.dart';
 export 'acceptRequestJob.dart';
-export 'review_page.dart';  
-// export 'cg_profile.dart';
+export 'review_page.dart';
+export 'user_profile.dart';
