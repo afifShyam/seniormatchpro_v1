@@ -48,19 +48,6 @@ class _HirePageState extends State<HirePage> {
         backgroundColor: Colors.purple, // App bar color
         elevation: 0,
       ),
-      floatingActionButton: GestureDetector(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => JobRequestsPage(
-                id: widget.id,
-              ),
-            ),
-          );
-        },
-        child: const Icon(Icons.public_sharp),
-      ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Form(
