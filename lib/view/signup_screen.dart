@@ -61,12 +61,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
               );
               log(state.error);
-            } else if (state.signupStatus == SignupStatus.completed) {
-              // Navigator.push(
-              //   context,
-              //   MaterialPageRoute(builder: (context) => const CgDashboard()),
-              // );
-            }
+            } else if (state.signupStatus == SignupStatus.completed) {}
           },
           child: bodyContent(context),
         ),
@@ -184,6 +179,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 "Sign Up",
                 () {
                   _signUp(context);
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text('Successful Register'),
+                        content: const Text('sucess register the user.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => const SignInScreen()),
+                              );
+                              // Navigator.of(context).pop();
+                            },
+                            child: const Text('OK'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
                 },
               ),
             ],
