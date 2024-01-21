@@ -1,13 +1,15 @@
 import 'dart:async';
+import 'dart:developer';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:seniormatchpro_v1/index.dart';
+// import 'package:seniormatchpro_v1/index.dart';
 
 class JobRequestsPage extends StatefulWidget {
   final String id;
+  final String roleName;
 
-  const JobRequestsPage({super.key, required this.id});
+  const JobRequestsPage({super.key, required this.id, required this.roleName});
 
   @override
   State<JobRequestsPage> createState() => _JobRequestsPageState();
@@ -16,14 +18,18 @@ class JobRequestsPage extends StatefulWidget {
 class _JobRequestsPageState extends State<JobRequestsPage> {
   final DatabaseReference _databaseReference =
       FirebaseDatabase.instance.ref().child('job_requests');
+  final DatabaseReference _databaseReferenceUser =
+      FirebaseDatabase.instance.ref().child('user');
 
   List<Map<String, dynamic>> jobRequests = [];
   Timer? _timer;
+  Map<String, dynamic>? userDetail1 = {};
 
   @override
   void initState() {
     super.initState();
     _loadJobRequests();
+    userDetails();
     _startCountdownTimer();
   }
 
@@ -50,6 +56,7 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
                 value['status'] == 'pending') {
               requests.add({
                 'key': key,
+                'username': value['username'],
                 'jobName': value['jobName'],
                 'location': value['location'],
                 'email': value['email'],
@@ -72,6 +79,48 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
           });
 
           _startCountdownTimer();
+        }
+      },
+    );
+  }
+
+  void userDetails() {
+    _databaseReferenceUser.child(widget.roleName).onValue.listen(
+      (event) {
+        if (event.snapshot.value != null) {
+          Map<String, dynamic> userDetail = {};
+          Map<dynamic, dynamic> values =
+              event.snapshot.value as Map<dynamic, dynamic>;
+
+          values.forEach((key, value) {
+            print('Key: $key, Value: $value');
+            if (value is Map<dynamic, dynamic> &&
+                value.containsKey('id') &&
+                value['id'].toString() == widget.id) {
+              userDetail = {
+                'key': key,
+                'username': value['username'],
+                'jobName': value['jobName'],
+                'location': value['location'],
+                'email': value['email'],
+                'status': value['status'],
+                'createdAt': value['createdAt'],
+                'priceOffer': value['priceOffer'],
+                'id': value['id'],
+                'remainingTimeSeconds':
+                    _calculateRemainingTime(value['createdAt']),
+                'jobId': value['jobId'],
+              };
+
+              // Process userDetail as needed (e.g., display in UI or perform some other action)
+              print('User Details: $userDetail');
+            }
+          });
+
+          // You may perform additional actions here if needed
+          setState(() {
+            userDetail1 = userDetail;
+          });
         }
       },
     );
@@ -130,7 +179,30 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
         color: Colors.grey.shade300,
         child: Padding(
           padding: const EdgeInsets.all(20.0),
-          child: _buildJobRequestsList(),
+          child: Column(
+            children: [
+              Align(
+                alignment: Alignment.topLeft,
+                child: Text.rich(TextSpan(
+                    text: 'Hi,',
+                    style: const TextStyle(fontSize: 17, color: Colors.black),
+                    children: [
+                      TextSpan(
+                        text: ' ${userDetail1?['username'] ?? 'no Name'}',
+                        style: const TextStyle(
+                          color: Colors.purple,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      )
+                    ])),
+              ),
+              const SizedBox(
+                height: 15,
+              ),
+              _buildJobRequestsList(),
+            ],
+          ),
         ),
       ),
       // bottomNavigationBar: BottomNavbarCaregivers(id: widget.id),

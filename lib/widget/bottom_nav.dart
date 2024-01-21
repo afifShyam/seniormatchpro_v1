@@ -4,9 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:seniormatchpro_v1/view/index.dart';
 
 class BottomNavbar extends StatefulWidget {
-  const BottomNavbar({super.key, required this.id});
+  const BottomNavbar({super.key, required this.id, required this.roleName});
 
   final String id;
+  final String roleName;
 
   @override
   State<BottomNavbar> createState() => _BottomNavbarState();
@@ -54,9 +55,10 @@ class _BottomNavbarState extends State<BottomNavbar> {
         return AcceptedJobListPage(
             id: widget.id); // Replace MenuScreen with your actual widget
       case 2:
-        return Container();
-      // return ProfileScreen(
-      //     id: widget.id); // Replace ProfileScreen with your actual widget
+        return UserProfilePage(
+          id: widget.id,
+          roleName: widget.roleName,
+        );
       default:
         return Container();
     }

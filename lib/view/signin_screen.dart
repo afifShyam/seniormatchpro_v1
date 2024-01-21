@@ -1,13 +1,12 @@
 import 'dart:async';
 import 'dart:developer';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:seniormatchpro_v1/index.dart';
 import 'package:firebase_database/firebase_database.dart';
 
 class SignInScreen extends StatefulWidget {
-  const SignInScreen({Key? key}) : super(key: key);
+  const SignInScreen({super.key});
 
   @override
   State<SignInScreen> createState() => _SignInScreenState();
@@ -79,6 +78,7 @@ class _SignInScreenState extends State<SignInScreen> {
                             if (userId == 'Elders') {
                               String roleElders =
                                   await _getUserIdElders(_emailController.text);
+                              log('user id job: ${roleElders}');
 
                               userRole = await _getUserRole(
                                   userId, _emailController.text);
@@ -86,8 +86,8 @@ class _SignInScreenState extends State<SignInScreen> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) =>
-                                        BottomNavbar(id: userRole),
+                                    builder: (context) => BottomNavbar(
+                                        id: userRole, roleName: roleElders),
                                   ),
                                 );
                               }
@@ -101,7 +101,8 @@ class _SignInScreenState extends State<SignInScreen> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) =>
-                                        BottomNavbarCaregivers(id: userRole),
+                                        BottomNavbarCaregivers(
+                                            id: userRole, roleName: userId),
                                   ),
                                 );
                               }

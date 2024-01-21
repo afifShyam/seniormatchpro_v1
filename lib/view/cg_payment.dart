@@ -1,7 +1,8 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:developer';
 
-import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:seniormatchpro_v1/view/index.dart';
 
@@ -11,7 +12,7 @@ class AcceptedJobListPage extends StatefulWidget {
   final String id;
 
   @override
-  _AcceptedJobListPageState createState() => _AcceptedJobListPageState();
+  State<AcceptedJobListPage> createState() => _AcceptedJobListPageState();
 }
 
 class _AcceptedJobListPageState extends State<AcceptedJobListPage> {
@@ -19,15 +20,21 @@ class _AcceptedJobListPageState extends State<AcceptedJobListPage> {
       FirebaseDatabase.instance.ref().child('job_requests');
 
   List<Map<String, dynamic>> acceptedJobRequests = [];
+  double tipsAmount = 0;
 
   @override
   void initState() {
     super.initState();
-
     _loadAcceptedJobRequests();
   }
 
-  void _loadAcceptedJobRequests() {
+  @override
+  void dispose() {
+    _databaseReference.onValue.drain(); // release resources
+    super.dispose();
+  }
+
+  Future<void> _loadAcceptedJobRequests() async {
     _databaseReference.onValue.listen((event) {
       if (event.snapshot.value != null) {
         List<Map<String, dynamic>> acceptedRequests = [];
@@ -48,11 +55,11 @@ class _AcceptedJobListPageState extends State<AcceptedJobListPage> {
               'createdAt': value['createdAt'],
               'jobId': value['jobId'],
               'status': value['status'],
+              'reviewStatus': value['reviewStatus'] ?? '',
             });
           }
         });
 
-        // Sort the accepted requests by createdAt in descending order
         acceptedRequests
             .sort((a, b) => b['createdAt'].compareTo(a['createdAt']));
 
@@ -64,51 +71,135 @@ class _AcceptedJobListPageState extends State<AcceptedJobListPage> {
   }
 
   void _makePayment(String key, String offerPrice) {
+    TextEditingController tipsController = TextEditingController();
+    bool addTips = false;
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        TextEditingController _amountController = TextEditingController();
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title: const Text(
+                'Make Payment',
+                textAlign: TextAlign.center,
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Total Payment: RM $offerPrice'),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: addTips,
+                        onChanged: (value) {
+                          setState(() {
+                            addTips = value!;
+                          });
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextFormField(
+                          controller: tipsController,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                                RegExp(r'^\d+\.?\d{0,2}$')),
+                          ],
+                          decoration: const InputDecoration(
+                            labelText: 'Enter tip amount',
+                          ),
+                          enabled: addTips,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey,
+                        ),
+                        child: const Text('Skip'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          FocusScope.of(context).unfocus();
+                          double tips =
+                              double.tryParse(tipsController.text) ?? 0;
 
+                          double offerPriceCasting =
+                              double.tryParse(offerPrice) ?? 0;
+
+                          if (tips >= 0 && tips <= offerPriceCasting) {
+                            double totalAmount = offerPriceCasting + tips;
+                            _updateStatus(
+                                key, 'completed', totalAmount.toString());
+                            Navigator.of(context).pop();
+                            _showSuccessDialog(totalAmount);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Tip amount must be between 0 and the offer price',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                        child: const Text('Pay Now'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showSuccessDialog(double totalAmount) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Make Payment'),
+          title: const Text(
+            'Payment Successful',
+            textAlign: TextAlign.center,
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              TextField(
-                controller: _amountController,
-                keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}$')),
-                ],
-                decoration: const InputDecoration(labelText: 'Enter Amount'),
+              const Icon(
+                Icons.check_circle,
+                color: Colors.green,
+                size: 48,
+              ),
+              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.center,
+                child: Text(
+                    'You have successfully paid RM $totalAmount to this caregiver.'),
               ),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
-                  FocusScope.of(context).unfocus();
-                  if (_amountController.text.isNotEmpty &&
-                      double.tryParse(_amountController.text) != null) {
-                    double enteredAmount = double.parse(_amountController.text);
-                    double offerPriceCasting = double.parse(offerPrice);
-
-                    if (enteredAmount >= offerPriceCasting) {
-                      _updateStatus(key, 'completed');
-                      Navigator.of(context).pop();
-                    } else {
-                      // Show a SnackBar with the error message
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Amount must be equal to or greater than the offer price',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  }
+                  Navigator.of(context).pop();
                 },
-                child: const Text('Pay Now'),
+                child: const Text('OK'),
               ),
             ],
           ),
@@ -117,8 +208,8 @@ class _AcceptedJobListPageState extends State<AcceptedJobListPage> {
     );
   }
 
-  void _updateStatus(String key, String newStatus) {
-    _databaseReference.child(key).update({'status': newStatus});
+  void _updateStatus(String key, String newStatus, String paid) {
+    _databaseReference.child(key).update({'status': newStatus, 'paid': paid});
     // You can update other fields as needed
   }
 
@@ -200,7 +291,6 @@ class _AcceptedJobListPageState extends State<AcceptedJobListPage> {
               ],
             ),
           ),
-          // Move the button to the bottom
           Padding(
             padding: const EdgeInsets.all(20.0),
             child: Row(

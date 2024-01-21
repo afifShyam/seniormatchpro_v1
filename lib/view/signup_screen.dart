@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:seniormatchpro_v1/index.dart';
@@ -19,6 +20,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _passwordTextController = TextEditingController();
   final TextEditingController _emailTextController = TextEditingController();
   final TextEditingController _userNameTextController = TextEditingController();
+  final TextEditingController _userAgeTextController = TextEditingController();
+  final TextEditingController _userExperience = TextEditingController();
   String dropdownValue = 'Elders';
   File? imageFile;
 
@@ -109,6 +112,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 Icons.lock_outlined,
                 true,
                 _passwordTextController,
+              ),
+              const SizedBox(height: 20),
+              reusableTextFieldNum(
+                "Enter Age",
+                Icons.person_outline,
+                false,
+                _userAgeTextController,
+              ),
+              const SizedBox(height: 20),
+              reusableTextFieldNum(
+                "Enter Experience Year",
+                Icons.work_outline,
+                false,
+                _userExperience,
               ),
               const SizedBox(height: 20),
               DropdownButtonFormField<String>(
@@ -294,6 +311,30 @@ class _SignUpScreenState extends State<SignUpScreen> {
       controller: controller,
       obscureText: obscureText,
       style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        hintText: hintText,
+        hintStyle: const TextStyle(color: Colors.white),
+        prefixIcon: Icon(icon, color: Colors.white),
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.3),
+        contentPadding:
+            const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(30),
+          borderSide: BorderSide.none,
+        ),
+      ),
+    );
+  }
+
+  Widget reusableTextFieldNum(String hintText, IconData icon, bool obscureText,
+      TextEditingController controller) {
+    return TextField(
+      controller: controller,
+      obscureText: obscureText,
+      style: const TextStyle(color: Colors.white),
+      keyboardType: TextInputType.number,
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       decoration: InputDecoration(
         hintText: hintText,
         hintStyle: const TextStyle(color: Colors.white),

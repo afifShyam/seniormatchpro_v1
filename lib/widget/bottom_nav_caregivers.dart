@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:seniormatchpro_v1/view/index.dart';
 
 class BottomNavbarCaregivers extends StatefulWidget {
-  const BottomNavbarCaregivers({super.key, required this.id});
+  const BottomNavbarCaregivers(
+      {super.key, required this.id, required this.roleName});
 
   final String id;
+  final String roleName;
 
   @override
   State<BottomNavbarCaregivers> createState() => _BottomNavbarState();
@@ -49,14 +51,16 @@ class _BottomNavbarState extends State<BottomNavbarCaregivers> {
     switch (index) {
       case 0:
         return JobRequestsPage(
-            id: widget.id); // Replace HomeScreen with your actual widget
+          id: widget.id,
+          roleName: widget.roleName,
+        ); // Replace HomeScreen with your actual widget
       case 1:
         return AcceptedRequestsPage(
             userId: widget.id); // Replace MenuScreen with your actual widget
       case 2:
-        return UserProfile(
-          name: 'Names',
-          email: 'hehe',
+        return UserProfilePage(
+          id: widget.id,
+          roleName: widget.roleName,
         );
       // return ProfileScreen(id: widget.id); // Replace ProfileScreen with your actual widget
       default:
