@@ -7,13 +7,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:seniormatchpro_v1/index.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 
 class SignUpScreen extends StatefulWidget {
-  const SignUpScreen({Key? key}) : super(key: key);
+  const SignUpScreen({super.key});
 
   @override
-  _SignUpScreenState createState() => _SignUpScreenState();
+  State<SignUpScreen> createState() => _SignUpScreenState();
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
@@ -22,6 +21,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _userNameTextController = TextEditingController();
   final TextEditingController _userAgeTextController = TextEditingController();
   final TextEditingController _userExperience = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+
   String dropdownValue = 'Elders';
   File? imageFile;
 
@@ -120,12 +121,26 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 false,
                 _userAgeTextController,
               ),
+              Visibility(
+                visible: dropdownValue == 'Caregiver',
+                child: Column(
+                  children: [
+                    const SizedBox(height: 20),
+                    reusableTextFieldNum(
+                      "Enter Experience Year",
+                      Icons.work_outline,
+                      false,
+                      _userExperience,
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 20),
               reusableTextFieldNum(
-                "Enter Experience Year",
-                Icons.work_outline,
+                "Enter Phone Number",
+                Icons.phone,
                 false,
-                _userExperience,
+                _phoneController,
               ),
               const SizedBox(height: 20),
               DropdownButtonFormField<String>(
@@ -220,6 +235,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   );
                 },
               ),
+              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -251,8 +267,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
             email: _emailTextController.text,
             password: _passwordTextController.text,
             role: dropdownValue,
-            image: imageFile?.path ??
-                '', // Use an empty string if imageFile is null
+            image: imageFile!, // Use an empty string if imageFile is null
+            age: _userAgeTextController.text,
+            exp: dropdownValue == 'Caregiver' ? _userExperience.text : '',
+            phoneNum: _phoneController.text,
           ),
         );
 
@@ -327,8 +345,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  Widget reusableTextFieldNum(String hintText, IconData icon, bool obscureText,
-      TextEditingController controller) {
+  Widget reusableTextFieldNum(
+    String hintText,
+    IconData icon,
+    bool obscureText,
+    TextEditingController controller,
+  ) {
     return TextField(
       controller: controller,
       obscureText: obscureText,

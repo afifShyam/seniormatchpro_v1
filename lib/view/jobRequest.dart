@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:developer';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:seniormatchpro_v1/view/signin_screen.dart';
 // import 'package:seniormatchpro_v1/index.dart';
 
 class JobRequestsPage extends StatefulWidget {
@@ -174,6 +176,20 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
         centerTitle: true,
         backgroundColor: Colors.blueGrey,
         elevation: 0,
+        actions: [
+          IconButton(
+            onPressed: () {
+              FirebaseAuth.instance.signOut();
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SignInScreen(),
+                ),
+              );
+            },
+            icon: const Icon(Icons.logout),
+          ),
+        ],
       ),
       body: Container(
         color: Colors.grey.shade300,

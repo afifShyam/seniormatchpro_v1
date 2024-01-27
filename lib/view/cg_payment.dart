@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:seniormatchpro_v1/view/index.dart';
 
 class AcceptedJobListPage extends StatefulWidget {
-  const AcceptedJobListPage({Key? key, required this.id}) : super(key: key);
+  const AcceptedJobListPage({super.key, required this.id});
 
   final String id;
 

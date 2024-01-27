@@ -101,6 +101,7 @@ class _AcceptedRequestsPageState extends State<AcceptedRequestsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: const SizedBox(),
         title: const Text('Accepted Requests'),
         centerTitle: true,
         backgroundColor: Colors.blueGrey,

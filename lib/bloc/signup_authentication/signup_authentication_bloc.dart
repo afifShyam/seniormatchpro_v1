@@ -42,7 +42,8 @@ class SignupAuthenticationBloc
     return maxId;
   }
 
-  //sign up user in realtime database
+//sign up user in realtime database
+//sign up user in realtime database
   Future<void> _userSignUpUser(
     SignUpRealtimeDatabaseUser event,
     Emitter<SignupAuthenticationState> emit,
@@ -54,7 +55,16 @@ class SignupAuthenticationBloc
 
       // Get the next ID for the new user.
       final id = await getNextId();
-      print('ID: ${state.imageUpload}');
+      print('ID: $id');
+
+      final storageReference = FirebaseStorage.instance.ref().child(
+          'profile_images/${id}_${DateTime.now().millisecondsSinceEpoch.toString()}');
+
+      // Upload image to Firebase Storage
+      final UploadTask uploadTask = storageReference.putFile(event.image);
+      final TaskSnapshot storageSnapshot =
+          await uploadTask.whenComplete(() => null);
+      final String imageUrl = await storageSnapshot.ref.getDownloadURL();
 
       final userData = {
         'id': id,
@@ -62,8 +72,12 @@ class SignupAuthenticationBloc
         'email': event.email,
         'password': event.password,
         'role': event.role,
-        'image': event.image,
+        'image': imageUrl, // Use the imageUrl from Firebase Storage
+        'age': event.age,
+        if (event.role == 'Caregiver') 'experience': event.exp,
+        'phoneNumber': event.phoneNum,
       };
+
       // generate unique key
       // final key = databaseReference.push().key;
       final userRef =

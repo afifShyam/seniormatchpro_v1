@@ -1,3 +1,4 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 part of 'signup_authentication_bloc.dart';
 
 abstract class SignupAuthenticationEvent {}
@@ -7,7 +8,10 @@ class SignUpRealtimeDatabaseUser extends SignupAuthenticationEvent {
   final String email;
   final String password;
   final String role;
-  final String image;
+  final File image;
+  final String age;
+  final String exp;
+  final String phoneNum;
 
   SignUpRealtimeDatabaseUser({
     required this.username,
@@ -15,6 +19,9 @@ class SignUpRealtimeDatabaseUser extends SignupAuthenticationEvent {
     required this.password,
     required this.role,
     required this.image,
+    required this.age,
+    required this.exp,
+    required this.phoneNum,
   });
 }
 

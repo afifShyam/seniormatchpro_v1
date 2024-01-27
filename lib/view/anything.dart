@@ -1,6 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:seniormatchpro_v1/index.dart';
 
 class UserProfilePage extends StatefulWidget {
   const UserProfilePage({super.key, required this.id, required this.roleName});
@@ -14,19 +16,18 @@ class UserProfilePage extends StatefulWidget {
 
 class _UserProfilePageState extends State<UserProfilePage> {
   bool isOnline = false;
-  double userRating = 4.5; // Set the user's rating dynamically
-  Map<String, dynamic> userDetail1 = {}; // Add this line to declare userDetail1
+  double userRating = 4.5;
+  Map<String, dynamic> userDetail1 = {};
   final DatabaseReference _databaseReferenceUser =
       FirebaseDatabase.instance.ref().child('user');
 
   @override
   void initState() {
     super.initState();
-    userDetails(); // Call userDetails when the state is initialized
+    userDetails();
   }
 
   void userDetails() {
-    // Assuming you have a reference to your Firebase database (_databaseReferenceUser)
     _databaseReferenceUser.child(widget.roleName).onValue.listen(
       (event) {
         if (event.snapshot.value != null) {
@@ -35,68 +36,82 @@ class _UserProfilePageState extends State<UserProfilePage> {
               event.snapshot.value as Map<dynamic, dynamic>;
 
           values.forEach((key, value) {
-            print('Key: $key, Value: $value');
             if (value is Map<dynamic, dynamic> &&
                 value.containsKey('id') &&
                 value['id'].toString() == widget.id) {
               userDetail = {
                 'key': key,
                 'username': value['username'],
-                'jobName': value['jobName'],
+                'age': value['age'],
                 'location': value['location'],
                 'email': value['email'],
-                'status': value['status'],
+                'experience': value['experience'],
                 'createdAt': value['createdAt'],
-                'priceOffer': value['priceOffer'],
+                'image': value['image'],
                 'id': value['id'],
-                'jobId': value['jobId'],
+                'phoneNumber': value['phoneNumber'],
+                'role': value['role'],
               };
 
-              // Process userDetail as needed (e.g., display in UI or perform some other action)
-              print('User Details: $userDetail');
+              setState(() {
+                userDetail1 = userDetail;
+                isOnline = value['online'] ?? false;
+              });
             }
-          });
-
-          // You may perform additional actions here if needed
-          setState(() {
-            userDetail1 = userDetail;
           });
         }
       },
     );
   }
 
+  void updateOnlineStatus(bool online) {
+    _databaseReferenceUser
+        .child(widget.roleName)
+        .child(userDetail1['key'])
+        .update({'online': online});
+  }
+
+  void _logout() {
+    FirebaseAuth.instance.signOut();
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const SignInScreen(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Your existing build method goes here
     return Scaffold(
       appBar: AppBar(
+        centerTitle: true,
+        leading: const SizedBox(),
         title: const Text('User Profile'),
+        elevation: 0,
       ),
       body: Container(
         decoration: const BoxDecoration(
-          color: Colors.deepPurple, // Set the background color to dark purple
+          color: Colors.deepPurple,
         ),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Display user face in a circular avatar at the top center
-              const Center(
+              Center(
                 child: CircleAvatar(
-                  radius: 50, // Adjust the radius as needed
-                  backgroundImage: AssetImage(
-                      'assets/user_face_image.jpg'), // Replace with the actual image path
+                  radius: 50,
+                  backgroundImage:
+                      NetworkImage(userDetail1['image'].toString()),
                 ),
               ),
               const SizedBox(height: 20),
-              // Container for user details with shadow
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white, // Set the container color to white
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
                   boxShadow: const [
                     BoxShadow(
@@ -114,118 +129,151 @@ class _UserProfilePageState extends State<UserProfilePage> {
                       style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black), // Set text color to black
+                          color: Colors.black),
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      'Age: ${userDetail1['age'] ?? ''}',
+                      'Age: ${userDetail1['age'] ?? ''} years old',
                       style: const TextStyle(fontSize: 16, color: Colors.black),
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Experience: ${userDetail1['experience'] ?? ''}',
-                      style: const TextStyle(fontSize: 16, color: Colors.black),
+                    Visibility(
+                      visible: widget.roleName != 'Elders',
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 10),
+                          Text(
+                            'Experience: ${userDetail1['experience'] ?? ''} years',
+                            style: const TextStyle(
+                                fontSize: 16, color: Colors.black),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 10),
                     Text(
                       'Email: ${userDetail1['email'] ?? ''}',
                       style: const TextStyle(fontSize: 16, color: Colors.black),
                     ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Role: ${userDetail1['role'] ?? ''}',
+                      style: const TextStyle(fontSize: 16, color: Colors.black),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Phone Number: ${userDetail1['phoneNumber'] ?? '-'}',
+                      style: const TextStyle(fontSize: 16, color: Colors.black),
+                    ),
                   ],
                 ),
               ),
               const SizedBox(height: 10),
-              // Switch for online status
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Online Status:',
-                    style: TextStyle(fontSize: 16, color: Colors.white),
-                  ),
-                  Switch(
-                    value: isOnline,
-                    onChanged: (value) {
-                      setState(() {
-                        isOnline = value;
-                      });
-                    },
-                    activeColor: Colors.purple,
-                    inactiveThumbColor: Colors.black,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              // Fixed star rating for the user (read-only)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    'Star Rating: ',
-                    style: TextStyle(fontSize: 16, color: Colors.white),
-                  ),
-                  RatingBar.builder(
-                    itemSize: 20,
-                    initialRating: userRating, // Use the dynamic rating here
-                    allowHalfRating: true,
-                    itemBuilder: (_, __) => const Icon(
-                      Icons.star,
-                      color: Colors.amber,
+              Visibility(
+                visible: widget.roleName != 'Elders',
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Online Status:',
+                      style: TextStyle(fontSize: 16, color: Colors.white),
                     ),
-                    onRatingUpdate: (_) {
-                      // Rating update is not allowed
-                    },
-                  ),
-                ],
+                    Visibility(
+                      visible: widget.roleName != 'Elders',
+                      child: Switch(
+                        value: isOnline,
+                        onChanged: (value) {
+                          setState(() {
+                            isOnline = value;
+                          });
+                          updateOnlineStatus(value);
+                        },
+                        activeColor: Colors.purple,
+                        inactiveThumbColor: Colors.black,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 10),
-              // Container for user reviews with shadow
-              Expanded(
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white, // Set the container color to white
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.purple,
-                        offset: Offset(0, 2),
-                        blurRadius: 6.0,
+              Visibility(
+                visible: widget.roleName != 'Elders',
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Star Rating: ',
+                      style: TextStyle(fontSize: 16, color: Colors.white),
+                    ),
+                    RatingBar.builder(
+                      itemSize: 20,
+                      initialRating: userRating,
+                      allowHalfRating: true,
+                      itemBuilder: (_, __) => const Icon(
+                        Icons.star,
+                        color: Colors.amber,
                       ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        'Reviews from Users:',
-                        style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black), // Set text color to black
-                      ),
-                      const SizedBox(height: 10),
-                      Expanded(
-                        child: ListView(
-                          children: const [
-                            ListTile(
-                              title: Text('User1: Great service!'),
-                              subtitle: Text('Rating: 5.0',
-                                  style: TextStyle(color: Colors.black)),
-                            ),
-                            ListTile(
-                              title: Text('User2: Excellent work!'),
-                              subtitle: Text('Rating: 4.0',
-                                  style: TextStyle(color: Colors.black)),
-                            ),
-                            // Add more ListTile widgets as needed
-                          ],
+                      onRatingUpdate: (_) {},
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              Visibility(
+                visible: widget.roleName != 'Elders',
+                child: Expanded(
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.purple,
+                          offset: Offset(0, 2),
+                          blurRadius: 6.0,
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'Reviews from Users:',
+                          style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black),
+                        ),
+                        const SizedBox(height: 10),
+                        Expanded(
+                          child: ListView(
+                            children: const [
+                              ListTile(
+                                title: Text('User1: Great service!'),
+                                subtitle: Text('Rating: 5.0',
+                                    style: TextStyle(color: Colors.black)),
+                              ),
+                              ListTile(
+                                title: Text('User2: Excellent work!'),
+                                subtitle: Text('Rating: 4.0',
+                                    style: TextStyle(color: Colors.black)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red, // Set the button color to red
+                ),
+                onPressed: _logout,
+                child: const Text('Logout'),
               ),
             ],
           ),
