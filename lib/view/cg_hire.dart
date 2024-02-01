@@ -1,16 +1,15 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import 'package:intl/intl.dart';
-import 'package:seniormatchpro_v1/view/jobRequest.dart';
 
 class HirePage extends StatefulWidget {
-  const HirePage(
-      {super.key,
-      required this.id,
-      required this.name,
-      required this.jobIdUser});
+  const HirePage({
+    Key? key,
+    required this.id,
+    required this.name,
+    required this.jobIdUser,
+  }) : super(key: key);
 
   final String id;
   final String name;
@@ -26,6 +25,7 @@ class _HirePageState extends State<HirePage> {
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
+  final TextEditingController _durationController = TextEditingController();
   final DatabaseReference _databaseReference =
       FirebaseDatabase.instance.ref().child('job_requests');
   DateTime? _selectedPerformDate;
@@ -41,11 +41,11 @@ class _HirePageState extends State<HirePage> {
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: Colors.white, // Text color
+            color: Colors.white,
           ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.purple, // App bar color
+        backgroundColor: Colors.purple,
         elevation: 0,
       ),
       body: Padding(
@@ -60,7 +60,7 @@ class _HirePageState extends State<HirePage> {
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black, // Text color
+                  color: Colors.black,
                 ),
               ),
               const SizedBox(height: 20),
@@ -71,6 +71,8 @@ class _HirePageState extends State<HirePage> {
               _buildPriceFormField(_priceController),
               const SizedBox(height: 20),
               _buildFormField(_emailController, 'Email'),
+              const SizedBox(height: 20),
+              _buildDurationFormField(),
               const SizedBox(height: 20),
               _buildPerformDateFormField(),
               const SizedBox(height: 20),
@@ -83,12 +85,13 @@ class _HirePageState extends State<HirePage> {
                       _locationController.text,
                       _emailController.text,
                       _priceController.text,
+                      _durationController.text,
                       _selectedPerformDate ?? DateTime.now(),
                     );
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purple, // Button color
+                  backgroundColor: Colors.purple,
                 ),
                 child: const Text('Send Request'),
               ),
@@ -99,48 +102,6 @@ class _HirePageState extends State<HirePage> {
           ),
         ),
       ),
-    );
-  }
-
-  void _sendJobRequest(String id, String jobName, String location, String email,
-      String price, DateTime performDate) {
-    String requestId = _databaseReference.push().key ?? '';
-
-    // Generate a unique jobId starting from 101
-    // int jobIdCounter = 101;
-    // String jobId = 'job_$jobIdCounter';
-
-    // Increment the counter for the next job
-    // jobIdCounter++;
-    _databaseReference.child(requestId).set({
-      'id': id,
-      'jobId': widget.jobIdUser,
-      'jobName': jobName,
-      'priceOffer': price,
-      'location': location,
-      'email': email,
-      'status': 'pending',
-      'performingDate': performDate.toLocal().millisecondsSinceEpoch,
-      'createdAt': DateTime.now().millisecondsSinceEpoch,
-    });
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Request Sent'),
-          content: const Text('Your job request has been sent successfully.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pop();
-              },
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
     );
   }
 
@@ -171,19 +132,48 @@ class _HirePageState extends State<HirePage> {
       ],
       validator: (value) {
         if (value == null || value.isEmpty) {
-          return 'Please enter the price';
+          return 'Please enter the price per hour';
         }
 
         double price = double.tryParse(value) ?? 0;
 
         if (price < 30) {
-          return 'Minimum price is RM30';
+          return 'Minimum price per hour is RM30';
         }
 
         return null;
       },
       decoration: InputDecoration(
-        labelText: 'Price (RM)',
+        labelText: 'Price per Hour (RM)',
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDurationFormField() {
+    return TextFormField(
+      controller: _durationController,
+      keyboardType: TextInputType.number,
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}$')),
+      ],
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please enter the duration in hours';
+        }
+
+        double duration = double.tryParse(value) ?? 0;
+
+        if (duration <= 0) {
+          return 'Duration must be greater than 0';
+        }
+
+        return null;
+      },
+      decoration: InputDecoration(
+        labelText: 'Duration (hours)',
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
         ),
@@ -201,8 +191,7 @@ class _HirePageState extends State<HirePage> {
               context: context,
               initialDate: DateTime.now(),
               firstDate: DateTime.now(),
-              lastDate:
-                  DateTime.now().add(Duration(days: 365)), // One year from now
+              lastDate: DateTime.now().add(Duration(days: 365)),
             );
 
             if (pickedDate != null && pickedDate != _selectedPerformDate) {
@@ -276,6 +265,48 @@ class _HirePageState extends State<HirePage> {
           ),
         ),
       ],
+    );
+  }
+
+  void _sendJobRequest(String id, String jobName, String location, String email,
+      String price, String duration, DateTime performDate) {
+    String requestId = _databaseReference.push().key ?? '';
+
+    double durationValue = double.tryParse(duration) ?? 0;
+    double priceValue = double.tryParse(price) ?? 0;
+    double total = durationValue * priceValue;
+
+    _databaseReference.child(requestId).set({
+      'id': id,
+      'jobId': widget.jobIdUser,
+      'jobName': jobName,
+      'pricePerHour': price,
+      'duration': duration,
+      'totalPrice': total.toString(),
+      'location': location,
+      'email': email,
+      'status': 'pending',
+      'performingDate': performDate.toLocal().millisecondsSinceEpoch,
+      'createdAt': DateTime.now().millisecondsSinceEpoch,
+    });
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Request Sent'),
+          content: const Text('Your job request has been sent successfully.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pop();
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

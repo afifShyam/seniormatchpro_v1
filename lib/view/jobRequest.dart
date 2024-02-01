@@ -64,7 +64,7 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
                 'email': value['email'],
                 'status': value['status'],
                 'createdAt': value['createdAt'],
-                'priceOffer': value['priceOffer'],
+                'pricePerHour': value['pricePerHour'],
                 'id': value['id'],
                 'remainingTimeSeconds':
                     _calculateRemainingTime(value['createdAt']),
@@ -107,7 +107,7 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
                 'email': value['email'],
                 'status': value['status'],
                 'createdAt': value['createdAt'],
-                'priceOffer': value['priceOffer'],
+                'pricePerHour': value['pricePerHour'],
                 'id': value['id'],
                 'remainingTimeSeconds':
                     _calculateRemainingTime(value['createdAt']),
@@ -155,15 +155,14 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
   }
 
   Future<void> _updateStatus(String key, String newStatus) async {
-    if (newStatus == 'rejected') {
-      // Only update the status to 'rejected' in the database
-      await _databaseReference.child(key).update({'status': 'rejected'});
+    if (newStatus == 'rejected' || newStatus == 'accepted') {
+      // Only update the status to 'rejected' or 'accepted' in the database
+      await _databaseReference.child(key).update({'status': newStatus});
       setState(() {
         // Remove the request from the UI
         jobRequests.removeWhere((request) => request['key'] == key);
       });
-    } else {
-      await _databaseReference.child(key).update({'status': newStatus});
+      _timer?.cancel();
     }
   }
 
@@ -199,7 +198,8 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
             children: [
               Align(
                 alignment: Alignment.topLeft,
-                child: Text.rich(TextSpan(
+                child: Text.rich(
+                  TextSpan(
                     text: 'Hi,',
                     style: const TextStyle(fontSize: 17, color: Colors.black),
                     children: [
@@ -210,18 +210,21 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
-                      )
-                    ])),
+                      ),
+                    ],
+                  ),
+                ),
               ),
               const SizedBox(
                 height: 15,
               ),
-              _buildJobRequestsList(),
+              Expanded(
+                child: _buildJobRequestsList(),
+              ),
             ],
           ),
         ),
       ),
-      // bottomNavigationBar: BottomNavbarCaregivers(id: widget.id),
     );
   }
 
@@ -296,7 +299,7 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Price: RM ${request['priceOffer']}',
+                  'Price: RM ${request['pricePerHour']}',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,

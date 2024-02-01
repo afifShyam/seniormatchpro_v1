@@ -23,6 +23,7 @@ class _AcceptedRequestsPageState extends State<AcceptedRequestsPage> {
 
   List<Map<String, dynamic>> acceptedRequests = [];
   Timer? _timer;
+  bool jobCompleted = false;
 
   @override
   void initState() {
@@ -77,6 +78,19 @@ class _AcceptedRequestsPageState extends State<AcceptedRequestsPage> {
   void _completeJob(String key) {
     _databaseReference.child(key).update({'status': 'done_task'});
     // You can update other fields as needed
+
+    // Job is completed for the specific job, set the flag
+    setState(() {
+      acceptedRequests = acceptedRequests.map((request) {
+        if (request['key'] == key) {
+          return {
+            ...request,
+            'jobCompleted': true,
+          };
+        }
+        return request;
+      }).toList();
+    });
   }
 
   void _arrived(String key) {
@@ -86,7 +100,6 @@ class _AcceptedRequestsPageState extends State<AcceptedRequestsPage> {
     setState(() {
       acceptedRequests = acceptedRequests.map((request) {
         if (request['key'] == key) {
-          // Create a new map with the updated status and flag
           return {
             ...request,
             'status': 'processing',
@@ -135,10 +148,26 @@ class _AcceptedRequestsPageState extends State<AcceptedRequestsPage> {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
         acceptedRequests.forEach((request) {
-          if (request['performingDate'] != null) {
+          if (request['performingDate'] != null &&
+              !(request['jobCompleted'] as bool? ?? false)) {
             int remainingTimeSeconds = (request['performingDate'] as int) -
                 DateTime.now().millisecondsSinceEpoch;
             request['remainingTimeSeconds'] = remainingTimeSeconds ~/ 1000;
+
+            if (remainingTimeSeconds <= 0) {
+              // Job completed, set the flag for the specific job
+              setState(() {
+                acceptedRequests = acceptedRequests.map((map) {
+                  if (map['key'] == request['key']) {
+                    return {
+                      ...map,
+                      'jobCompleted': true,
+                    };
+                  }
+                  return map;
+                }).toList();
+              });
+            }
           }
         });
       });

@@ -20,6 +20,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
   Map<String, dynamic> userDetail1 = {};
   final DatabaseReference _databaseReferenceUser =
       FirebaseDatabase.instance.ref().child('user');
+  bool isCurrentUserProfile = false;
 
   @override
   void initState() {
@@ -56,6 +57,9 @@ class _UserProfilePageState extends State<UserProfilePage> {
               setState(() {
                 userDetail1 = userDetail;
                 isOnline = value['online'] ?? false;
+                // Check if the user is viewing their own profile
+                isCurrentUserProfile =
+                    FirebaseAuth.instance.currentUser?.uid == widget.id;
               });
             }
           });
@@ -181,12 +185,14 @@ class _UserProfilePageState extends State<UserProfilePage> {
                       visible: widget.roleName != 'Elders',
                       child: Switch(
                         value: isOnline,
-                        onChanged: (value) {
-                          setState(() {
-                            isOnline = value;
-                          });
-                          updateOnlineStatus(value);
-                        },
+                        onChanged: isCurrentUserProfile
+                            ? (value) {
+                                setState(() {
+                                  isOnline = value;
+                                });
+                                updateOnlineStatus(value);
+                              }
+                            : null, // Disable the switch if it's not the current user's profile
                         activeColor: Colors.purple,
                         inactiveThumbColor: Colors.black,
                       ),

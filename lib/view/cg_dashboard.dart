@@ -133,10 +133,24 @@ class _CgDashboardState extends State<CgDashboard> {
                   padding: const EdgeInsets.all(8.0),
                   child: Row(
                     children: [
-                      CircleAvatar(
-                        radius: 20,
-                        backgroundImage:
-                            NetworkImage(userData[index]['image'].toString()),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => UserProfilePage(
+                                id: userData[index]['id'].toString(),
+                                roleName:
+                                    'Caregiver', // Replace with the appropriate role
+                              ),
+                            ),
+                          );
+                        },
+                        child: CircleAvatar(
+                          radius: 20,
+                          backgroundImage:
+                              NetworkImage(userData[index]['image'].toString()),
+                        ),
                       ),
                       const SizedBox(
                         width: 10,
@@ -162,8 +176,8 @@ class _CgDashboardState extends State<CgDashboard> {
                             ),
                             child: Text(
                               userData[index]['online'] == true
-                                  ? 'Online'
-                                  : 'Offline',
+                                  ? 'Available'
+                                  : 'Offway',
                             ),
                           ),
                         ],
