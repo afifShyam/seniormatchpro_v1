@@ -184,10 +184,16 @@ class _UserProfilePageState extends State<UserProfilePage> {
       Switch(
         value: isOnline,
         onChanged: (value) {
-          setState(() {
-            isOnline = value;
-          });
-          updateOnlineStatus(value);
+          if (widget.roleName != 'Elders') {
+            setState(() {
+              isOnline = value;
+            });
+            updateOnlineStatus(value);
+          } else {
+            // Handle the case where Elders are not allowed to update
+            // You can use a SnackBar or some other feedback mechanism
+            print('Elders are not allowed to update online status');
+          }
         },
         activeColor: Colors.purple,
         inactiveThumbColor: Colors.black,
