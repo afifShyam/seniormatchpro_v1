@@ -173,33 +173,28 @@ class _UserProfilePageState extends State<UserProfilePage> {
               ),
               const SizedBox(height: 10),
               Visibility(
-                visible: widget.roleName != 'Elders',
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Online Status:',
-                      style: TextStyle(fontSize: 16, color: Colors.white),
-                    ),
-                    Visibility(
-                      visible: widget.roleName != 'Elders',
-                      child: Switch(
-                        value: isOnline,
-                        onChanged: isCurrentUserProfile
-                            ? (value) {
-                                setState(() {
-                                  isOnline = value;
-                                });
-                                updateOnlineStatus(value);
-                              }
-                            : null, // Disable the switch if it's not the current user's profile
-                        activeColor: Colors.purple,
-                        inactiveThumbColor: Colors.black,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+  visible: widget.roleName != 'Elders',
+  child: Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      const Text(
+        'Online Status:',
+        style: TextStyle(fontSize: 16, color: Colors.white),
+      ),
+      Switch(
+        value: isOnline,
+        onChanged: (value) {
+          setState(() {
+            isOnline = value;
+          });
+          updateOnlineStatus(value);
+        },
+        activeColor: Colors.purple,
+        inactiveThumbColor: Colors.black,
+      ),
+    ],
+  ),
+),
               const SizedBox(height: 10),
               Visibility(
                 visible: widget.roleName != 'Elders',
