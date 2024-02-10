@@ -1,8 +1,9 @@
 import 'dart:async';
-import 'dart:developer';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:seniormatchpro_v1/view/signin_screen.dart';
 // import 'package:seniormatchpro_v1/index.dart';
@@ -69,6 +70,8 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
                 'remainingTimeSeconds':
                     _calculateRemainingTime(value['createdAt']),
                 'jobId': value['jobId'],
+                'latitude': value['latitude'] ?? 0.0,
+                'longitude': value['longitude'] ?? 0.0,
               });
             }
           });
@@ -88,11 +91,13 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
 
   void userDetails() {
     _databaseReferenceUser.child(widget.roleName).onValue.listen(
-      (event) {
+      (event) async {
         if (event.snapshot.value != null) {
           Map<String, dynamic> userDetail = {};
           Map<dynamic, dynamic> values =
               event.snapshot.value as Map<dynamic, dynamic>;
+
+          Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
 
           values.forEach((key, value) {
             print('Key: $key, Value: $value');
@@ -112,6 +117,9 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
                 'remainingTimeSeconds':
                     _calculateRemainingTime(value['createdAt']),
                 'jobId': value['jobId'],
+                'latitude': position.latitude,
+                'longitude': position.longitude,
+
               };
 
               // Process userDetail as needed (e.g., display in UI or perform some other action)
