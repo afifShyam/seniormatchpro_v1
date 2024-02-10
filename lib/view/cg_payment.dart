@@ -1,6 +1,5 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
-import 'dart:developer';
-
+import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -20,7 +19,6 @@ class _AcceptedJobListPageState extends State<AcceptedJobListPage> {
       FirebaseDatabase.instance.ref().child('job_requests');
 
   List<Map<String, dynamic>> acceptedJobRequests = [];
-  double tipsAmount = 0;
 
   @override
   void initState() {
@@ -51,7 +49,7 @@ class _AcceptedJobListPageState extends State<AcceptedJobListPage> {
               'jobName': value['jobName'],
               'location': value['location'],
               'email': value['email'],
-              'priceOffer': value['priceOffer'],
+              'totalPrice': value['totalPrice'],
               'createdAt': value['createdAt'],
               'jobId': value['jobId'],
               'status': value['status'],
@@ -79,89 +77,105 @@ class _AcceptedJobListPageState extends State<AcceptedJobListPage> {
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
-            return AlertDialog(
-              title: const Text(
-                'Make Payment',
-                textAlign: TextAlign.center,
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Total Payment: RM $offerPrice'),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Checkbox(
-                        value: addTips,
-                        onChanged: (value) {
-                          setState(() {
-                            addTips = value!;
-                          });
-                        },
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextFormField(
-                          controller: tipsController,
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                                RegExp(r'^\d+\.?\d{0,2}$')),
-                          ],
-                          decoration: const InputDecoration(
-                            labelText: 'Enter tip amount',
-                          ),
-                          enabled: addTips,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey,
-                        ),
-                        child: const Text('Skip'),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-                          FocusScope.of(context).unfocus();
-                          double tips =
-                              double.tryParse(tipsController.text) ?? 0;
+            bool disposed = false; // Track if dialog is disposed
 
-                          double offerPriceCasting =
-                              double.tryParse(offerPrice) ?? 0;
+            // Dismiss dialog if state is disposed
+            WidgetsBinding.instance?.addPostFrameCallback((_) {
+              if (disposed) {
+                Navigator.of(context).pop();
+              }
+            });
 
-                          if (tips >= 0 && tips <= offerPriceCasting) {
-                            double totalAmount = offerPriceCasting + tips;
-                            _updateStatus(
-                                key, 'completed', totalAmount.toString());
-                            Navigator.of(context).pop();
-                            _showSuccessDialog(totalAmount);
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Tip amount must be between 0 and the offer price',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                                backgroundColor: Colors.red,
+            return WillPopScope(
+              onWillPop: () async {
+                disposed = true; // Mark dialog as disposed
+                return true;
+              },
+              child: AlertDialog(
+                title: const Text(
+                  'Make Payment',
+                  textAlign: TextAlign.center,
+                ),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Total Payment: RM $offerPrice'),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: addTips,
+                          onChanged: (value) {
+                            setState(() {
+                              addTips = value!;
+                            });
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextFormField(
+                            controller: tipsController,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(
+                                RegExp(r'^\d+\.?\d{0,2}$'),
                               ),
-                            );
-                          }
-                        },
-                        child: const Text('Pay Now'),
-                      ),
-                    ],
-                  ),
-                ],
+                            ],
+                            decoration: const InputDecoration(
+                              labelText: 'Enter tip amount',
+                            ),
+                            enabled: addTips,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.grey,
+                          ),
+                          child: const Text('Skip'),
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            FocusScope.of(context).unfocus();
+                            double tips =
+                                double.tryParse(tipsController.text) ?? 0;
+
+                            double offerPriceCasting =
+                                double.tryParse(offerPrice) ?? 0;
+
+                            if (tips >= 0 && tips <= offerPriceCasting) {
+                              double totalAmount = offerPriceCasting + tips;
+                              _updateStatus(
+                                  key, 'completed', totalAmount.toString());
+                              Navigator.of(context).pop();
+                              _showSuccessDialog(totalAmount);
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Tip amount must be between 0 and the offer price',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          },
+                          child: const Text('Pay Now'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             );
           },
@@ -209,7 +223,9 @@ class _AcceptedJobListPageState extends State<AcceptedJobListPage> {
   }
 
   void _updateStatus(String key, String newStatus, String paid) {
-    _databaseReference.child(key).update({'status': newStatus, 'paid': paid});
+    _databaseReference
+        .child(key)
+        .update({'status': newStatus, 'paid': double.parse(paid).toString()});
     // You can update other fields as needed
   }
 
@@ -282,7 +298,7 @@ class _AcceptedJobListPageState extends State<AcceptedJobListPage> {
                 Text('Email: ${jobRequest['email']}'),
                 const SizedBox(height: 8),
                 Text(
-                  'Price: RM ${jobRequest['priceOffer']}',
+                  'Price: RM ${jobRequest['totalPrice']}',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
@@ -298,9 +314,8 @@ class _AcceptedJobListPageState extends State<AcceptedJobListPage> {
                 ElevatedButton(
                   onPressed: jobRequest['status'] == 'done_task'
                       ? () {
-                          log('${jobRequest['priceOffer']}');
                           _makePayment(
-                              jobRequest['key'], jobRequest['priceOffer']);
+                              jobRequest['key'], jobRequest['totalPrice']);
                         }
                       : null,
                   style: ElevatedButton.styleFrom(
@@ -318,7 +333,10 @@ class _AcceptedJobListPageState extends State<AcceptedJobListPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
                     ),
-                    child: const Text('Review'),
+                    child: const Text(
+                      'Review',
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ),
               ],
             ),

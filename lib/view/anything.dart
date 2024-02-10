@@ -5,10 +5,12 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:seniormatchpro_v1/index.dart';
 
 class UserProfilePage extends StatefulWidget {
-  const UserProfilePage({super.key, required this.id, required this.roleName});
+  const UserProfilePage(
+      {super.key, required this.id, required this.roleName, this.userId = ''});
 
   final String id;
   final String roleName;
+  final String userId;
 
   @override
   State<UserProfilePage> createState() => _UserProfilePageState();
@@ -21,11 +23,13 @@ class _UserProfilePageState extends State<UserProfilePage> {
   final DatabaseReference _databaseReferenceUser =
       FirebaseDatabase.instance.ref().child('user');
   bool isCurrentUserProfile = false;
+  List<Map<String, dynamic>> userReviews = [];
 
   @override
   void initState() {
     super.initState();
     userDetails();
+    fetchReviews();
   }
 
   void userDetails() {
@@ -58,8 +62,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                 userDetail1 = userDetail;
                 isOnline = value['online'] ?? false;
                 // Check if the user is viewing their own profile
-                isCurrentUserProfile =
-                    FirebaseAuth.instance.currentUser?.uid == widget.id;
+                isCurrentUserProfile = widget.userId == widget.id;
               });
             }
           });
@@ -73,6 +76,36 @@ class _UserProfilePageState extends State<UserProfilePage> {
         .child(widget.roleName)
         .child(userDetail1['key'])
         .update({'online': online});
+  }
+
+  void fetchReviews() {
+    DatabaseReference reviewsRef =
+        FirebaseDatabase.instance.ref().child('reviews');
+    reviewsRef.onValue.listen((event) {
+      if (event.snapshot.value != null) {
+        List<Map<String, dynamic>> reviews = [];
+        Map<dynamic, dynamic> values =
+            event.snapshot.value as Map<dynamic, dynamic>;
+
+        values.forEach((key, value) {
+          if (value is Map<dynamic, dynamic> &&
+              value['userId'].toString() == widget.id) {
+            reviews.add({
+              'key': key,
+              'jobId': value['jobId'],
+              'rating': value['rating'],
+              'reviewText': value['reviewText'],
+              'status': value['status'],
+              'userId': value['userId'],
+            });
+          }
+        });
+
+        setState(() {
+          userReviews = reviews;
+        });
+      }
+    });
   }
 
   void _logout() {
@@ -181,44 +214,18 @@ class _UserProfilePageState extends State<UserProfilePage> {
                       'Online Status:',
                       style: TextStyle(fontSize: 16, color: Colors.white),
                     ),
-                    Visibility(
-                      visible: widget.roleName != 'Elders',
-                      child: Switch(
-                        value: isOnline,
-                        onChanged: isCurrentUserProfile
-                            ? (value) {
-                                setState(() {
-                                  isOnline = value;
-                                });
-                                updateOnlineStatus(value);
-                              }
-                            : null, // Disable the switch if it's not the current user's profile
-                        activeColor: Colors.purple,
-                        inactiveThumbColor: Colors.black,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-              Visibility(
-                visible: widget.roleName != 'Elders',
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      'Star Rating: ',
-                      style: TextStyle(fontSize: 16, color: Colors.white),
-                    ),
-                    RatingBar.builder(
-                      itemSize: 20,
-                      initialRating: userRating,
-                      allowHalfRating: true,
-                      itemBuilder: (_, __) => const Icon(
-                        Icons.star,
-                        color: Colors.amber,
-                      ),
-                      onRatingUpdate: (_) {},
+                    Switch(
+                      value: isOnline,
+                      onChanged: isCurrentUserProfile
+                          ? (value) {
+                              setState(() {
+                                isOnline = value;
+                              });
+                              updateOnlineStatus(value);
+                            }
+                          : null, // Disable the switch if it's not the current user's profile
+                      activeColor: Colors.purple,
+                      inactiveThumbColor: Colors.black,
                     ),
                   ],
                 ),
@@ -253,19 +260,17 @@ class _UserProfilePageState extends State<UserProfilePage> {
                         ),
                         const SizedBox(height: 10),
                         Expanded(
-                          child: ListView(
-                            children: const [
-                              ListTile(
-                                title: Text('User1: Great service!'),
-                                subtitle: Text('Rating: 5.0',
-                                    style: TextStyle(color: Colors.black)),
-                              ),
-                              ListTile(
-                                title: Text('User2: Excellent work!'),
-                                subtitle: Text('Rating: 4.0',
-                                    style: TextStyle(color: Colors.black)),
-                              ),
-                            ],
+                          child: ListView.builder(
+                            itemCount: userReviews.length,
+                            itemBuilder: (context, index) {
+                              return ListTile(
+                                title: Text(userReviews[index]['reviewText']),
+                                subtitle: Text(
+                                  'Rating: ${userReviews[index]['rating']}',
+                                  style: const TextStyle(color: Colors.black),
+                                ),
+                              );
+                            },
                           ),
                         ),
                       ],
@@ -274,12 +279,15 @@ class _UserProfilePageState extends State<UserProfilePage> {
                 ),
               ),
               const SizedBox(height: 10),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red, // Set the button color to red
+              Visibility(
+                visible: isCurrentUserProfile,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red, // Set the button color to red
+                  ),
+                  onPressed: _logout,
+                  child: const Text('Logout'),
                 ),
-                onPressed: _logout,
-                child: const Text('Logout'),
               ),
             ],
           ),
