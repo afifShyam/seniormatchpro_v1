@@ -61,6 +61,7 @@ class _BottomNavbarState extends State<BottomNavbarCaregivers> {
         return UserProfilePage(
           id: widget.id,
           roleName: widget.roleName,
+          userId: widget.id,
         );
       // return ProfileScreen(id: widget.id); // Replace ProfileScreen with your actual widget
       default:

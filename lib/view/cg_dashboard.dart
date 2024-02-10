@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -160,12 +161,15 @@ class _CgDashboardState extends State<CgDashboard> {
                     children: [
                       GestureDetector(
                         onTap: () {
+                          log('id dashboard P:${userData[index]['id'].toString()}');
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => UserProfilePage(
                                 id: userData[index]['id'].toString(),
-                                roleName: 'Caregiver', 
+                                roleName:
+                                    'Caregiver', // Replace with the appropriate role
+                                userId: widget.id,
                               ),
                             ),
                           );

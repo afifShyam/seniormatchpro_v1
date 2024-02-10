@@ -1,4 +1,3 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:async';
 
 import 'package:firebase_database/firebase_database.dart';
@@ -22,8 +21,7 @@ class _AcceptedRequestsPageState extends State<AcceptedRequestsPage> {
       FirebaseDatabase.instance.ref().child('job_requests');
 
   List<Map<String, dynamic>> acceptedRequests = [];
-  Timer? _timer;
-  bool jobCompleted = false;
+  late Timer _timer;
 
   @override
   void initState() {
@@ -34,7 +32,7 @@ class _AcceptedRequestsPageState extends State<AcceptedRequestsPage> {
 
   @override
   void dispose() {
-    _timer?.cancel(); // Cancel the timer when the page is disposed
+    _timer.cancel(); // Cancel the timer when the page is disposed
     super.dispose();
   }
 
@@ -47,19 +45,13 @@ class _AcceptedRequestsPageState extends State<AcceptedRequestsPage> {
 
         values.forEach((key, value) {
           if (value is Map<dynamic, dynamic> &&
-                  value.containsKey('id') &&
-                  value['id'].toString() == widget.userId &&
-                  value['status'] == 'accepted' ||
-              value['status'] == 'processing') {
+              value.containsKey('id') &&
+              value['id'].toString() == widget.userId &&
+              (value['status'] == 'accepted' ||
+                  value['status'] == 'processing')) {
             accepted.add({
               'key': key,
-              'jobName': value['jobName'],
-              'location': value['location'],
-              'email': value['email'],
-              'status': value['status'],
-              'createdAt': value['createdAt'],
-              'priceOffer': value['priceOffer'],
-              'performingDate': value['performingDate'],
+              ...value,
               'showArrivedButton': true, // Initialize the flag
             });
           }
@@ -75,8 +67,12 @@ class _AcceptedRequestsPageState extends State<AcceptedRequestsPage> {
     });
   }
 
+  void _updateJobStatus(String key, String status) {
+    _databaseReference.child(key).update({'status': status});
+  }
+
   void _completeJob(String key) {
-    _databaseReference.child(key).update({'status': 'done_task'});
+    _updateJobStatus(key, 'done_task');
     // You can update other fields as needed
 
     // Job is completed for the specific job, set the flag
@@ -94,7 +90,7 @@ class _AcceptedRequestsPageState extends State<AcceptedRequestsPage> {
   }
 
   void _arrived(String key) {
-    _databaseReference.child(key).update({'status': 'processing'});
+    _updateJobStatus(key, 'processing');
 
     // Disable the 'Arrived' button
     setState(() {
@@ -108,40 +104,6 @@ class _AcceptedRequestsPageState extends State<AcceptedRequestsPage> {
         return request;
       }).toList();
     });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: const SizedBox(),
-        title: const Text('Accepted Requests'),
-        centerTitle: true,
-        backgroundColor: Colors.blueGrey,
-        elevation: 0,
-      ),
-      body: Container(
-        color: Colors.grey.shade300,
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: _buildAcceptedRequestsList(),
-        ),
-      ),
-      // bottomNavigationBar: BottomNavbarCaregivers(id: widget.userId),
-    );
-  }
-
-  Widget _buildAcceptedRequestsList() {
-    return acceptedRequests.isEmpty
-        ? const Center(
-            child: Text('No accepted requests available.'),
-          )
-        : ListView.builder(
-            itemCount: acceptedRequests.length,
-            itemBuilder: (context, index) {
-              return _buildAcceptedRequestCard(acceptedRequests[index]);
-            },
-          );
   }
 
   void _startCountdownTimer() {
@@ -174,6 +136,39 @@ class _AcceptedRequestsPageState extends State<AcceptedRequestsPage> {
     });
   }
 
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: const SizedBox(),
+        title: const Text('Accepted Requests'),
+        centerTitle: true,
+        backgroundColor: Colors.blueGrey,
+        elevation: 0,
+      ),
+      body: Container(
+        color: Colors.grey.shade300,
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: _buildAcceptedRequestsList(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAcceptedRequestsList() {
+    return acceptedRequests.isEmpty
+        ? const Center(
+            child: Text('No accepted requests available.'),
+          )
+        : ListView.builder(
+            itemCount: acceptedRequests.length,
+            itemBuilder: (context, index) {
+              return _buildAcceptedRequestCard(acceptedRequests[index]);
+            },
+          );
+  }
+
   Widget _buildAcceptedRequestCard(Map<String, dynamic> request) {
     DateTime? performingDate =
         DateTime.fromMillisecondsSinceEpoch(request['performingDate'] ?? 0);
@@ -185,6 +180,9 @@ class _AcceptedRequestsPageState extends State<AcceptedRequestsPage> {
         request['remainingTimeSeconds'] as int? ?? 0; // Default to 0 if null
     String remainingTimeFormatted =
         Duration(seconds: remainingTimeSeconds).toString().split('.').first;
+
+    String pricePerHour = request['pricePerHour'] ?? '0';
+    String totalPrice = request['totalPrice'] ?? '0.0';
 
     return Card(
       elevation: 3,
@@ -230,7 +228,15 @@ class _AcceptedRequestsPageState extends State<AcceptedRequestsPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Price: RM ${request['priceOffer']}',
+                  'Price per hour: RM $pricePerHour',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Total Price: RM $totalPrice',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,

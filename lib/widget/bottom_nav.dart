@@ -58,6 +58,7 @@ class _BottomNavbarState extends State<BottomNavbar> {
         return UserProfilePage(
           id: widget.id,
           roleName: widget.roleName,
+          userId: widget.id,
         );
       default:
         return Container();
