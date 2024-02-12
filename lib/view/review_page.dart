@@ -7,15 +7,17 @@ import 'package:seniormatchpro_v1/index.dart';
 class ReviewPage extends StatefulWidget {
   final String jobId;
   final String userId;
+  final String customerId;
 
   const ReviewPage({
-    Key? key,
+    super.key,
     required this.jobId,
     required this.userId,
-  }) : super(key: key);
+    required this.customerId,
+  });
 
   @override
-  _ReviewPageState createState() => _ReviewPageState();
+  State<ReviewPage> createState() => _ReviewPageState();
 }
 
 class _ReviewPageState extends State<ReviewPage> {
@@ -31,7 +33,7 @@ class _ReviewPageState extends State<ReviewPage> {
       child: Scaffold(
         appBar: AppBar(
           centerTitle: true,
-          title: Text('Write a Review'),
+          title: const Text('Write a Review'),
         ),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -45,7 +47,7 @@ class _ReviewPageState extends State<ReviewPage> {
                 direction: Axis.horizontal,
                 allowHalfRating: true,
                 itemCount: 5,
-                itemPadding: EdgeInsets.symmetric(horizontal: 4.0),
+                itemPadding: const EdgeInsets.symmetric(horizontal: 4.0),
                 itemBuilder: (context, _) => const Icon(
                   Icons.star,
                   color: Colors.amber,
@@ -64,7 +66,7 @@ class _ReviewPageState extends State<ReviewPage> {
                     reviewText = text;
                   });
                 },
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Enter your review',
                   border: OutlineInputBorder(),
                 ),
@@ -97,6 +99,7 @@ class _ReviewPageState extends State<ReviewPage> {
       reviewText: reviewText,
       rating: rating,
       status: 'reviewed',
+      customerId: widget.customerId,
     );
 
     _reviewsReference.push().set(review.toMap());
