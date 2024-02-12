@@ -48,57 +48,60 @@ class _HirePageState extends State<HirePage> {
         backgroundColor: Colors.purple,
         elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Enter your job request details for ${widget.name}',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+      body: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Enter your job request details for ${widget.name}',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              _buildFormField(_jobNameController, 'Job Name'),
-              const SizedBox(height: 20),
-              _buildFormField(_locationController, 'Location'),
-              const SizedBox(height: 20),
-              _buildPriceFormField(_priceController),
-              const SizedBox(height: 20),
-              _buildFormField(_emailController, 'Email'),
-              const SizedBox(height: 20),
-              _buildDurationFormField(),
-              const SizedBox(height: 20),
-              _buildPerformDateFormField(),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState?.validate() ?? false) {
-                    _sendJobRequest(
-                      widget.id,
-                      _jobNameController.text,
-                      _locationController.text,
-                      _emailController.text,
-                      _priceController.text,
-                      _durationController.text,
-                      _selectedPerformDate ?? DateTime.now(),
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purple,
+                const SizedBox(height: 20),
+                _buildFormField(_jobNameController, 'Job Name'),
+                const SizedBox(height: 20),
+                _buildFormField(_locationController, 'Location'),
+                const SizedBox(height: 20),
+                _buildPriceFormField(_priceController),
+                const SizedBox(height: 20),
+                _buildFormField(_emailController, 'Email'),
+                const SizedBox(height: 20),
+                _buildDurationFormField(),
+                const SizedBox(height: 20),
+                _buildPerformDateFormField(),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () {
+                    if (_formKey.currentState?.validate() ?? false) {
+                      _sendJobRequest(
+                        widget.id,
+                        _jobNameController.text,
+                        _locationController.text,
+                        _emailController.text,
+                        _priceController.text,
+                        _durationController.text,
+                        _selectedPerformDate ?? DateTime.now(),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.purple,
+                  ),
+                  child: const Text('Send Request'),
                 ),
-                child: const Text('Send Request'),
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-            ],
+                const SizedBox(
+                  height: 10,
+                ),
+              ],
+            ),
           ),
         ),
       ),
