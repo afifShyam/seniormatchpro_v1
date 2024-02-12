@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
@@ -17,13 +18,17 @@ class AcceptedJobListPage extends StatefulWidget {
 class _AcceptedJobListPageState extends State<AcceptedJobListPage> {
   final DatabaseReference _databaseReference =
       FirebaseDatabase.instance.ref().child('job_requests');
+  final DatabaseReference _reviewDB =
+      FirebaseDatabase.instance.ref().child('reviews');
 
   List<Map<String, dynamic>> acceptedJobRequests = [];
+  Map<String, dynamic> reviewLoadData = {};
 
   @override
   void initState() {
     super.initState();
     _loadAcceptedJobRequests();
+    reviewData();
   }
 
   @override
@@ -54,6 +59,7 @@ class _AcceptedJobListPageState extends State<AcceptedJobListPage> {
               'jobId': value['jobId'],
               'status': value['status'],
               'reviewStatus': value['reviewStatus'] ?? '',
+              'id': value['id'],
             });
           }
         });
@@ -63,6 +69,30 @@ class _AcceptedJobListPageState extends State<AcceptedJobListPage> {
 
         setState(() {
           acceptedJobRequests = acceptedRequests;
+        });
+      }
+    });
+  }
+
+  Future<void> reviewData() async {
+    _reviewDB.onValue.listen((event) {
+      if (event.snapshot.value != null) {
+        Map<String, dynamic> dataOfReview = {};
+        Map<dynamic, dynamic> values =
+            event.snapshot.value as Map<dynamic, dynamic>;
+
+        values.forEach((key, value) {
+          if (value is Map<dynamic, dynamic> &&
+              value['userId'].toString() == widget.id) {
+            dataOfReview = {
+              'key': key,
+              'jobId': value['jobId'],
+              'status': value['status'],
+            };
+            setState(() {
+              reviewLoadData = dataOfReview;
+            });
+          }
         });
       }
     });
@@ -80,16 +110,16 @@ class _AcceptedJobListPageState extends State<AcceptedJobListPage> {
             bool disposed = false; // Track if dialog is disposed
 
             // Dismiss dialog if state is disposed
-            WidgetsBinding.instance?.addPostFrameCallback((_) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
               if (disposed) {
                 Navigator.of(context).pop();
               }
             });
 
-            return WillPopScope(
-              onWillPop: () async {
-                disposed = true; // Mark dialog as disposed
-                return true;
+            return PopScope(
+              onPopInvoked: (b) {
+                b = true;
+                disposed = b; // Mark dialog as disposed
               },
               child: AlertDialog(
                 title: const Text(
@@ -229,11 +259,15 @@ class _AcceptedJobListPageState extends State<AcceptedJobListPage> {
     // You can update other fields as needed
   }
 
-  void _openReviewPage(String jobId, String userId) {
+  void _openReviewPage(String jobId, String userId, int i) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ReviewPage(jobId: jobId, userId: userId),
+        builder: (context) => ReviewPage(
+          jobId: jobId,
+          userId: userId,
+          customerId: acceptedJobRequests[i]['id'],
+        ),
       ),
     );
   }
@@ -265,12 +299,12 @@ class _AcceptedJobListPageState extends State<AcceptedJobListPage> {
         : ListView.builder(
             itemCount: acceptedJobRequests.length,
             itemBuilder: (context, index) {
-              return _buildAcceptedJobCard(acceptedJobRequests[index]);
+              return _buildAcceptedJobCard(acceptedJobRequests[index], index);
             },
           );
   }
 
-  Widget _buildAcceptedJobCard(Map<String, dynamic> jobRequest) {
+  Widget _buildAcceptedJobCard(Map<String, dynamic> jobRequest, int i) {
     return Card(
       elevation: 3,
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -321,23 +355,25 @@ class _AcceptedJobListPageState extends State<AcceptedJobListPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                   ),
-                  child: const Text('Make Payment'),
+                  child: Text(jobRequest['status'] == 'done_task'
+                      ? 'Make Payment'
+                      : 'Paid'),
                 ),
                 const Spacer(),
-                if (jobRequest['status'] == 'completed' &&
-                    jobRequest['reviewStatus'] !=
-                        'reviewed') // Add condition here
-                  ElevatedButton(
-                    onPressed: () =>
-                        _openReviewPage(jobRequest['jobId'], widget.id),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                    ),
-                    child: const Text(
-                      'Review',
-                      style: TextStyle(color: Colors.white),
-                    ),
+                ElevatedButton(
+                  onPressed: reviewLoadData['status'] == 'reviewed'
+                      ? null
+                      : () =>
+                          _openReviewPage(jobRequest['jobId'], widget.id, i),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
                   ),
+                  child: Text(
+                    reviewLoadData['status'] == 'reviewed'
+                        ? 'Reviewed'
+                        : 'Review',
+                  ),
+                )
               ],
             ),
           ),

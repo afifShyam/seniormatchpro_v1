@@ -192,13 +192,81 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
   }
 
   Future<void> _updateStatus(String key, String newStatus) async {
-    if (newStatus == 'rejected' || newStatus == 'accepted') {
-      await _databaseReference.child(key).update({'status': newStatus});
+    if (newStatus == 'accepted') {
+      bool canAccept = true;
 
+      // Fetch the job to be accepted
+      DatabaseReference jobToAcceptRef = _databaseReference.child(key);
+      DatabaseEvent snapshot = await jobToAcceptRef.once();
+
+      if (snapshot.snapshot.value != null) {
+        Map<dynamic, dynamic> jobToAcceptData =
+            snapshot.snapshot.value as Map<dynamic, dynamic>;
+
+        // Extract performing date and duration of the job to be accepted
+        DateTime jobToAcceptPerformingDate =
+            DateTime.parse(jobToAcceptData['performingDate']);
+        int jobToAcceptDuration = int.parse(jobToAcceptData['duration']);
+
+        // Check if accepting this job will cause timing conflict with any existing accepted job
+        for (var request in jobRequests) {
+          if (request['status'] == 'accepted') {
+            DateTime existingJobPerformingDate =
+                DateTime.parse(request['performingDate']);
+            int existingJobDuration = int.parse(request['duration']);
+
+            if (existingJobPerformingDate.isBefore(jobToAcceptPerformingDate) &&
+                existingJobPerformingDate
+                    .add(Duration(hours: existingJobDuration))
+                    .isAfter(jobToAcceptPerformingDate)) {
+              // Conflicting timing found, cannot accept the job
+              canAccept = false;
+              break;
+            } else if (jobToAcceptPerformingDate
+                    .isBefore(existingJobPerformingDate) &&
+                jobToAcceptPerformingDate
+                    .add(Duration(hours: jobToAcceptDuration))
+                    .isAfter(existingJobPerformingDate)) {
+              // Conflicting timing found, cannot accept the job
+              canAccept = false;
+              break;
+            }
+          }
+        }
+
+        if (canAccept) {
+          await jobToAcceptRef.update({'status': newStatus});
+          setState(() {
+            jobRequests.removeWhere((request) => request['key'] == key);
+          });
+          _timer?.cancel();
+        } else {
+          // Show error message or alert to the user indicating the timing conflict
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text('Timing Conflict'),
+                content: Text(
+                    'You cannot accept this job due to timing conflict with another accepted job.'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Text('OK'),
+                  ),
+                ],
+              );
+            },
+          );
+        }
+      }
+    } else if (newStatus == 'rejected') {
+      await _databaseReference.child(key).update({'status': newStatus});
       setState(() {
         jobRequests.removeWhere((request) => request['key'] == key);
       });
-
       _timer?.cancel();
     }
   }

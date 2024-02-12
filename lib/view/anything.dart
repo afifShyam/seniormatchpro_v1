@@ -89,7 +89,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
         values.forEach((key, value) {
           if (value is Map<dynamic, dynamic> &&
-              value['userId'].toString() == widget.id) {
+              value['customerId'].toString() == widget.id) {
             reviews.add({
               'key': key,
               'jobId': value['jobId'],
@@ -260,18 +260,40 @@ class _UserProfilePageState extends State<UserProfilePage> {
                         ),
                         const SizedBox(height: 10),
                         Expanded(
-                          child: ListView.builder(
-                            itemCount: userReviews.length,
-                            itemBuilder: (context, index) {
-                              return ListTile(
-                                title: Text(userReviews[index]['reviewText']),
-                                subtitle: Text(
-                                  'Rating: ${userReviews[index]['rating']}',
-                                  style: const TextStyle(color: Colors.black),
+                          child: userReviews.isEmpty
+                              ? const Center(
+                                  child: Text(
+                                    'No review yet',
+                                    style: TextStyle(color: Colors.black),
+                                  ),
+                                )
+                              : ListView.builder(
+                                  itemCount: userReviews.length,
+                                  itemBuilder: (context, index) {
+                                    return ListTile(
+                                      title: Text(
+                                          userReviews[index]['reviewText']),
+                                      subtitle: RatingBar.builder(
+                                        initialRating: userReviews[index]
+                                                ['rating']
+                                            .toDouble(),
+                                        minRating: 1,
+                                        direction: Axis.horizontal,
+                                        ignoreGestures: true,
+                                        allowHalfRating: true,
+                                        itemCount: 5,
+                                        itemSize: 30,
+                                        itemPadding: const EdgeInsets.symmetric(
+                                            horizontal: 4.0),
+                                        itemBuilder: (context, _) => const Icon(
+                                          Icons.accessible_forward_rounded,
+                                          color: Colors.purple,
+                                        ),
+                                        onRatingUpdate: (_) {},
+                                      ),
+                                    );
+                                  },
                                 ),
-                              );
-                            },
-                          ),
                         ),
                       ],
                     ),
