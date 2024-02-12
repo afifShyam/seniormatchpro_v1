@@ -1,78 +1,143 @@
 import 'dart:async';
 import 'dart:developer';
+import 'dart:html';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart'; // Add geolocator package
 import 'package:intl/intl.dart';
+//import 'package:location/location.dart';
 import 'package:seniormatchpro_v1/view/signin_screen.dart';
 
 class JobRequestsPage extends StatefulWidget {
   final String id;
   final String roleName;
+  final String userId;
+  final double latitude;
+  final double longitude;
 
-  const JobRequestsPage({super.key, required this.id, required this.roleName});
+  const JobRequestsPage({Key? key,
+         required this.id,
+         required this.roleName,
+         required this.userId,
+         required this.latitude,
+         required this.longitude})
+      : super(key: key);
 
   @override
   State<JobRequestsPage> createState() => _JobRequestsPageState();
 }
 
 class _JobRequestsPageState extends State<JobRequestsPage> {
+
   final DatabaseReference _databaseReference =
       FirebaseDatabase.instance.ref().child('job_requests');
+
   final DatabaseReference _databaseReferenceUser =
       FirebaseDatabase.instance.ref().child('user');
+
+  final DatabaseReference _databaseReferenceLocation =
+      FirebaseDatabase.instance.ref().child('Location');
 
   List<Map<String, dynamic>> jobRequests = [];
   Timer? _timer;
   Map<String, dynamic> userDetail = {};
+  Position? caregiverPosition;
 
   @override
   void initState() {
+    super.initState();
     _loadJobRequests();
     userDetails();
     _startCountdownTimer();
     log('nama dia lah: ${widget.id}, ${widget.roleName}');
-    super.initState();
+    _getLocation();
+    _storelocation();
   }
 
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
+
+  void _storelocation() {
+    DatabaseReference _databaseReferenceLocation =
+        FirebaseDatabase.instance.ref().child('locations');
+
+    Location location = Location(
+      userId: widget.userId,
+      latitude: widget.latitude,
+      longitude: widget.longitude,
+    
+
+    );
+
+    _databaseReferenceLocation.push().set(location.toMap());
+
+
   }
 
-  void _loadJobRequests() {
-    _databaseReference.onValue.listen((event) {
+
+  Future<void> _getLocation() async {
+  try {
+    caregiverPosition =
+        await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
+
+    _databaseReferenceUser.onValue.listen((event) {
       if (event.snapshot.value != null) {
         List<Map<String, dynamic>> requests = [];
-        Map<dynamic, dynamic> values =
-            event.snapshot.value as Map<dynamic, dynamic>;
+        Map<dynamic, dynamic> values = event.snapshot.value as Map<dynamic, dynamic>;
 
-        values.forEach((key, value) {
-          if (value is Map<dynamic, dynamic> &&
-              value.containsKey('id') &&
-              value['id'].toString() == widget.id &&
-              (value['status'] == 'pending')) {
+        for (var entry in values.entries) {
+          if (entry.value is Map<dynamic, dynamic> &&
+              entry.value.containsKey('id') &&
+              entry.value['id'].toString() == widget.id &&
+              entry.value['status'] == 'pending') {
+            // Fetch the caregiver's position (latitude and longitude)
             requests.add({
-              'key': key,
-              ...value,
-              'uername': value['username'],
-              'remainingTimeSeconds':
-                  _calculateRemainingTime(value['createdAt']),
+              'key': entry.key,
+              ...entry.value,
+              'latitude': caregiverPosition!.latitude,  // Store latitude
+              'longitude': caregiverPosition!.longitude,  // Store longitude
             });
           }
-        });
-
-        requests.sort((a, b) => b['createdAt'].compareTo(a['createdAt']));
-
-        setState(() {
-          jobRequests = requests;
-        });
-
-        _startCountdownTimer();
+        }
       }
     });
+  } catch (e) {
+    print("Error getting location: $e");
   }
+}
+
+
+
+  void _loadJobRequests() {
+  _databaseReference.onValue.listen((event) async {
+    if (event.snapshot.value != null) {
+      List<Map<String, dynamic>> requests = [];
+      Map<dynamic, dynamic> values = event.snapshot.value as Map<dynamic, dynamic>;
+
+      for (var entry in values.entries) {
+        if (entry.value is Map<dynamic, dynamic> &&
+            entry.value.containsKey('id') &&
+            entry.value['id'].toString() == widget.id &&
+            entry.value['status'] == 'pending') {
+          
+
+          requests.add({
+            'key': entry.key,
+            ...entry.value,
+            'username': entry.value['username'],
+            'remainingTimeSeconds': _calculateRemainingTime(entry.value['createdAt']),
+          });
+        }
+      }
+      setState(() {
+        jobRequests = requests;
+      });
+
+      _startCountdownTimer();
+    }
+  });
+}
+
 
   void userDetails() {
     _databaseReferenceUser.child('Caregiver').onValue.listen((event) {
@@ -88,8 +153,10 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
               'age': value['age'],
               'remainingTimeSeconds':
                   _calculateRemainingTime(value['createdAt']),
+              'latitude': value['latitude'] ?? 0.0,
+              'longitude': value['longitude'] ?? 0.0,
+              
             };
-            log('nama dia lah 1${user}');
           }
         });
         setState(() {
@@ -166,25 +233,6 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
           padding: const EdgeInsets.all(20.0),
           child: Column(
             children: [
-              // Align(
-              //   alignment: Alignment.topLeft,
-              //   child: Text.rich(
-              //     TextSpan(
-              //       text: 'Hi, ',
-              //       style: const TextStyle(fontSize: 17, color: Colors.black),
-              //       children: [
-              //         TextSpan(
-              //           text: '${userDetail['age']}',
-              //           style: const TextStyle(
-              //             color: Colors.purple,
-              //             fontSize: 20,
-              //             fontWeight: FontWeight.bold,
-              //           ),
-              //         ),
-              //       ],
-              //     ),
-              //   ),
-              // ),
               const SizedBox(
                 height: 15,
               ),
@@ -275,6 +323,22 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
                     fontSize: 14,
                   ),
                 ),
+                const SizedBox(height: 8),
+                Text(
+                  'Latitude: ${request['latitude']}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Longitude: ${request['longitude']}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
               ],
             ),
           ),
@@ -284,14 +348,16 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton(
-                  onPressed: () => _updateStatus(request['key'], 'accepted'),
+                  onPressed: () =>
+                      _updateStatus(request['key'], 'accepted'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                   ),
                   child: const Text('Accept'),
                 ),
                 ElevatedButton(
-                  onPressed: () => _updateStatus(request['key'], 'rejected'),
+                  onPressed: () =>
+                      _updateStatus(request['key'], 'rejected'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
                   ),
