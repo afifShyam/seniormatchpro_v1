@@ -1,36 +1,30 @@
 import 'dart:async';
 import 'dart:developer';
-import 'dart:html';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart'; // Add geolocator package
 import 'package:intl/intl.dart';
+import 'package:seniormatchpro_v1/index.dart';
 //import 'package:location/location.dart';
 import 'package:seniormatchpro_v1/view/signin_screen.dart';
 
 class JobRequestsPage extends StatefulWidget {
   final String id;
   final String roleName;
-  final String userId;
-  final double latitude;
-  final double longitude;
 
-  const JobRequestsPage({Key? key,
-         required this.id,
-         required this.roleName,
-         required this.userId,
-         required this.latitude,
-         required this.longitude})
-      : super(key: key);
+  const JobRequestsPage({
+    super.key,
+    required this.id,
+    required this.roleName,
+  });
 
   @override
   State<JobRequestsPage> createState() => _JobRequestsPageState();
 }
 
 class _JobRequestsPageState extends State<JobRequestsPage> {
-
   final DatabaseReference _databaseReference =
       FirebaseDatabase.instance.ref().child('job_requests');
 
@@ -52,92 +46,84 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
     userDetails();
     _startCountdownTimer();
     log('nama dia lah: ${widget.id}, ${widget.roleName}');
+
     _getLocation();
     _storelocation();
   }
 
-
-  void _storelocation() {
-    DatabaseReference _databaseReferenceLocation =
+  Future<void> _storelocation() async {
+    caregiverPosition = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.best);
+    DatabaseReference locationData =
         FirebaseDatabase.instance.ref().child('locations');
 
-    Location location = Location(
-      userId: widget.userId,
-      latitude: widget.latitude,
-      longitude: widget.longitude,
-    
-
+    LocationModel location = LocationModel(
+      userId: widget.id,
+      latitude: caregiverPosition?.latitude ?? 5.2624183,
+      longitude: caregiverPosition?.longitude ?? 103.0826191,
     );
 
-    _databaseReferenceLocation.push().set(location.toMap());
-
-
+    locationData.push().set(location.toMap());
   }
 
-
   Future<void> _getLocation() async {
-  try {
-    caregiverPosition =
-        await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
+    try {
+      _databaseReferenceUser.onValue.listen((event) {
+        if (event.snapshot.value != null) {
+          List<Map<String, dynamic>> requests = [];
+          Map<dynamic, dynamic> values =
+              event.snapshot.value as Map<dynamic, dynamic>;
 
-    _databaseReferenceUser.onValue.listen((event) {
+          for (var entry in values.entries) {
+            if (entry.value is Map<dynamic, dynamic> &&
+                entry.value.containsKey('id') &&
+                entry.value['id'].toString() == widget.id &&
+                entry.value['status'] == 'pending') {
+              // Fetch the caregiver's position (latitude and longitude)
+              requests.add({
+                'key': entry.key,
+                ...entry.value,
+                'latitude': caregiverPosition!.latitude, // Store latitude
+                'longitude': caregiverPosition!.longitude, // Store longitude
+              });
+            }
+          }
+        }
+      });
+    } catch (e) {
+      print("Error getting location: $e");
+    }
+  }
+
+  void _loadJobRequests() {
+    _databaseReference.onValue.listen((event) async {
       if (event.snapshot.value != null) {
         List<Map<String, dynamic>> requests = [];
-        Map<dynamic, dynamic> values = event.snapshot.value as Map<dynamic, dynamic>;
+        Map<dynamic, dynamic> values =
+            event.snapshot.value as Map<dynamic, dynamic>;
 
         for (var entry in values.entries) {
           if (entry.value is Map<dynamic, dynamic> &&
               entry.value.containsKey('id') &&
               entry.value['id'].toString() == widget.id &&
               entry.value['status'] == 'pending') {
-            // Fetch the caregiver's position (latitude and longitude)
             requests.add({
               'key': entry.key,
               ...entry.value,
-              'latitude': caregiverPosition!.latitude,  // Store latitude
-              'longitude': caregiverPosition!.longitude,  // Store longitude
+              'username': entry.value['username'],
+              'remainingTimeSeconds':
+                  _calculateRemainingTime(entry.value['createdAt']),
             });
           }
         }
+        setState(() {
+          jobRequests = requests;
+        });
+
+        _startCountdownTimer();
       }
     });
-  } catch (e) {
-    print("Error getting location: $e");
   }
-}
-
-
-
-  void _loadJobRequests() {
-  _databaseReference.onValue.listen((event) async {
-    if (event.snapshot.value != null) {
-      List<Map<String, dynamic>> requests = [];
-      Map<dynamic, dynamic> values = event.snapshot.value as Map<dynamic, dynamic>;
-
-      for (var entry in values.entries) {
-        if (entry.value is Map<dynamic, dynamic> &&
-            entry.value.containsKey('id') &&
-            entry.value['id'].toString() == widget.id &&
-            entry.value['status'] == 'pending') {
-          
-
-          requests.add({
-            'key': entry.key,
-            ...entry.value,
-            'username': entry.value['username'],
-            'remainingTimeSeconds': _calculateRemainingTime(entry.value['createdAt']),
-          });
-        }
-      }
-      setState(() {
-        jobRequests = requests;
-      });
-
-      _startCountdownTimer();
-    }
-  });
-}
-
 
   void userDetails() {
     _databaseReferenceUser.child('Caregiver').onValue.listen((event) {
@@ -155,7 +141,6 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
                   _calculateRemainingTime(value['createdAt']),
               'latitude': value['latitude'] ?? 0.0,
               'longitude': value['longitude'] ?? 0.0,
-              
             };
           }
         });
@@ -164,10 +149,6 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
         });
       }
     });
-  }
-
-  bool _isMatchingUser(Map<dynamic, dynamic> value) {
-    return value.containsKey('id') && value['id'].toString() == widget.id;
   }
 
   int _calculateRemainingTime(dynamic createdAt) {
@@ -242,24 +223,26 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
           _timer?.cancel();
         } else {
           // Show error message or alert to the user indicating the timing conflict
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: Text('Timing Conflict'),
-                content: Text(
-                    'You cannot accept this job due to timing conflict with another accepted job.'),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: Text('OK'),
-                  ),
-                ],
-              );
-            },
-          );
+          if (context.mounted) {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text('Timing Conflict'),
+                  content: const Text(
+                      'You cannot accept this job due to timing conflict with another accepted job.'),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('OK'),
+                    ),
+                  ],
+                );
+              },
+            );
+          }
         }
       }
     } else if (newStatus == 'rejected') {
@@ -416,16 +399,14 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton(
-                  onPressed: () =>
-                      _updateStatus(request['key'], 'accepted'),
+                  onPressed: () => _updateStatus(request['key'], 'accepted'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                   ),
                   child: const Text('Accept'),
                 ),
                 ElevatedButton(
-                  onPressed: () =>
-                      _updateStatus(request['key'], 'rejected'),
+                  onPressed: () => _updateStatus(request['key'], 'rejected'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
                   ),
