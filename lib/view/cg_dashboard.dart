@@ -20,6 +20,7 @@ class _CgDashboardState extends State<CgDashboard> {
   final dataUser = FirebaseDatabase.instance.ref().child('user/Caregiver');
   final databaseRef = FirebaseDatabase.instance.ref();
   List<Map<String, dynamic>> userData = [];
+  List<Map<String, dynamic>> userLocation = [];
   late Timer timer;
   Position? userPosition;
   TextEditingController searchController = TextEditingController();
@@ -27,16 +28,20 @@ class _CgDashboardState extends State<CgDashboard> {
   @override
   void initState() {
     super.initState();
-    fetchData();
-    // Set up a periodic timer to refresh data every 60 seconds
-    timer = Timer.periodic(const Duration(seconds: 60), (Timer t) {
-      fetchData();
-    });
+    fetchData().then((_) {
+      fetchLocation().then((_) {
+        // Set up a periodic timer to refresh data every 60 seconds
+        timer = Timer.periodic(const Duration(seconds: 60), (Timer t) {
+          fetchData();
+        });
 
-    Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best)
-        .then((position) {
-      setState(() {
-        userPosition = position;
+        Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best)
+            .then((position) {
+          setState(() {
+            log('location elder: ${position}');
+            userPosition = position;
+          });
+        });
       });
     });
   }
@@ -59,22 +64,7 @@ class _CgDashboardState extends State<CgDashboard> {
             setState(() {
               userData.clear();
               values.forEach((key, value) {
-                if (value is Map<dynamic, dynamic> &&
-                    value.containsKey('username') &&
-                    value.containsKey('latitude') &&
-                    value.containsKey('longitude')) {
-                  double caregiverLatitude = value['latitude'];
-                  double caregiverLongitude = value['longitude'];
-
-                  double distanceInMeters = userPosition != null
-                      ? Geolocator.distanceBetween(
-                          userPosition!.latitude,
-                          userPosition!.longitude,
-                          caregiverLatitude,
-                          caregiverLongitude,
-                        )
-                      : 0;
-
+                if (value is Map<dynamic, dynamic> && value.containsKey('id')) {
                   userData.add({
                     'userId': key,
                     'username': value['username'],
@@ -83,11 +73,64 @@ class _CgDashboardState extends State<CgDashboard> {
                     'image': value['image'] ?? 'No Image',
                     'role': value['role'] ?? 'No Role',
                     'id': value['id'] ?? 'No Id',
-                    'position': value['position'] ?? 'No position',
-                    'latitude': caregiverLatitude,
-                    'longitude': caregiverLongitude,
-                    'distance': distanceInMeters,
                   });
+                } else {
+                  print('Invalid data structure for key: $key');
+                }
+              });
+            });
+          }
+        }
+      });
+    } catch (error) {
+      print("Error fetching data: $error");
+    }
+  }
+
+  Future<void> fetchLocation() async {
+    try {
+      DatabaseReference userRef =
+          FirebaseDatabase.instance.ref().child('locations');
+
+      userRef.onValue.listen((event) {
+        if (event.snapshot.value != null) {
+          final Map<dynamic, dynamic>? values =
+              event.snapshot.value as Map<dynamic, dynamic>?;
+
+          if (values != null) {
+            setState(() {
+              userLocation.clear();
+              values.forEach((key, value) {
+                if (value is Map<dynamic, dynamic> &&
+                    value.containsKey('userId')) {
+                  double? caregiverLatitude = value['latitude'] ?? 0.0;
+                  double? caregiverLongitude = value['longitude'] ?? 0.0;
+
+                  log('caregiveLocation : `$caregiverLatitude`');
+                  log('caregiveLocation : `$caregiverLongitude`');
+
+                  if (caregiverLatitude != null && caregiverLongitude != null) {
+                    double distanceInMeters = userPosition != null
+                        ? Geolocator.distanceBetween(
+                            userPosition!.latitude,
+                            userPosition!.longitude,
+                            caregiverLatitude,
+                            caregiverLongitude,
+                          )
+                        : 0;
+
+                    userLocation.add({
+                      'userId': key,
+                      'latitude': caregiverLatitude,
+                      'longitude': caregiverLongitude,
+                      'distance': distanceInMeters,
+                      'userData': userData.firstWhere(
+                          (userData) => userData['id'] == value['userId'],
+                          orElse: () => {}),
+                    });
+                  } else {
+                    print('Latitude or longitude is null for key: $key');
+                  }
                 } else {
                   print('Invalid data structure for key: $key');
                 }
@@ -289,7 +332,7 @@ class _CgDashboardState extends State<CgDashboard> {
                                     ),
                                   ),
                                   Text(
-                                    'Distance: ${(userData[index]['distance'] ?? 0) / 1000} km',
+                                    'Distance: ${(userLocation[index]['distance'] ?? 0) / 1000} km',
                                     style: const TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.normal,

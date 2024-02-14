@@ -52,18 +52,36 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
   }
 
   Future<void> _storelocation() async {
-    caregiverPosition = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.best);
     DatabaseReference locationData =
         FirebaseDatabase.instance.ref().child('locations');
 
-    LocationModel location = LocationModel(
-      userId: widget.id,
-      latitude: caregiverPosition?.latitude ?? 5.2624183,
-      longitude: caregiverPosition?.longitude ?? 103.0826191,
-    );
+    // Check if the location already exists for the user
+    bool locationExists = false;
+    await locationData.once().then((snapshot) {
+      if (snapshot.snapshot.value != null) {
+        Map<dynamic, dynamic> values =
+            snapshot.snapshot.value as Map<dynamic, dynamic>;
+        values.forEach((key, value) {
+          if (value['userId'] == widget.id) {
+            locationExists = true;
+          }
+        });
+      }
+    });
 
-    locationData.push().set(location.toMap());
+    // If location doesn't exist, store the new location
+    if (!locationExists) {
+      caregiverPosition = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.best);
+
+      LocationModel location = LocationModel(
+        userId: widget.id,
+        latitude: caregiverPosition?.latitude ?? 5.2624183,
+        longitude: caregiverPosition?.longitude ?? 103.0826191,
+      );
+
+      locationData.push().set(location.toMap());
+    }
   }
 
   Future<void> _getLocation() async {
