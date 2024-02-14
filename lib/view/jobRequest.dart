@@ -85,6 +85,76 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
   }
 
   Future<void> _getLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // Check if location services are enabled
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      // Location services are not enabled, show a dialog to prompt the user to enable location
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Location Services Disabled'),
+            content: Text('Please enable location services to proceed.'),
+            actions: [
+              TextButton(
+                onPressed: () async {
+                  Navigator.of(context).pop();
+                  // Open location settings
+                  await Geolocator.openLocationSettings();
+                },
+                child: Text('Open Settings'),
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
+
+    // Check location permissions
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      // Location permissions are denied, request permissions
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.deniedForever) {
+        // The user has permanently denied location permissions, show a dialog to guide them to app settings
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Location Permissions Denied'),
+              content: Text(
+                  'Location permissions are denied permanently. Please enable them in app settings to proceed.'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+        return;
+      }
+
+      if (permission == LocationPermission.denied) {
+        // Location permissions are still denied, show a message informing the user
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Location permissions are required to proceed.'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+        return;
+      }
+    }
+
+    // Location services and permissions are enabled, proceed with getting location
     try {
       _databaseReferenceUser.onValue.listen((event) {
         if (event.snapshot.value != null) {
