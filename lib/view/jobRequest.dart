@@ -186,8 +186,21 @@ class _JobRequestsPageState extends State<JobRequestsPage> {
 
         // Extract performing date and duration of the job to be accepted
         DateTime jobToAcceptPerformingDate =
-            DateTime.parse(jobToAcceptData['performingDate']);
-        int jobToAcceptDuration = int.parse(jobToAcceptData['duration']);
+            DateTime.fromMillisecondsSinceEpoch(
+                jobToAcceptData['performingDate']);
+
+        int jobToAcceptDuration;
+        dynamic durationData = jobToAcceptData['duration'];
+        if (durationData is int) {
+          jobToAcceptDuration = durationData;
+        } else if (durationData is String) {
+          jobToAcceptDuration = int.parse(durationData);
+        } else {
+          // Handle the case where durationData is neither int nor String
+          // You can throw an error, log a message, or handle it according to your requirement
+          print('Error: Unexpected type for duration data');
+          return;
+        }
 
         // Check if accepting this job will cause timing conflict with any existing accepted job
         for (var request in jobRequests) {
